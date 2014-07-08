@@ -412,7 +412,6 @@ inline void configureSPI()
 //*****************************************************************************
 inline void configureRF()
 {
-
   RF24_InitTypeDef initRf24;
   initRf24.CrcBytes = usbBufferHostToDevice[1];
   initRf24.AddressWidth = usbBufferHostToDevice[2] - 2;
@@ -428,19 +427,15 @@ inline void configureRF()
   initRf24.InterruptEnable = false;
   RF24_init(&initRf24);
 
-  uint8_t addr[3];
-  addr[0] = usbBufferHostToDevice[8];
-  addr[1] = usbBufferHostToDevice[9];
-  addr[2] = usbBufferHostToDevice[10];
-
   // Set payload pipe#0 dynamic
   RF24_PIPE_setPacketSize(RF24_PIPE0, RF24_PACKET_SIZE_DYNAMIC);
 
   // Open pipe#0 with Enhanced ShockBurst enabled for receiving Auto-ACKs
   RF24_PIPE_open(RF24_PIPE0, true);
 
-  RF24_RX_setAddress(RF24_PIPE0, addr);
-  RF24_TX_setAddress(addr);
+  RF24_TX_setAddress(&usbBufferHostToDevice[8]);
+
+  RF24_RX_setAddress(RF24_PIPE0, &usbBufferHostToDevice[11]);
 
   sendResponeToHost(CONFIGURE_RF_OK);
 }
