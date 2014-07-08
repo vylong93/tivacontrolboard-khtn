@@ -138,8 +138,8 @@ BIN_OUTPUTS__QUOTED += \
 all: usbSwarmControl.out
 
 dependents:
-	-cd D:/Software\ Projects/ArmTI/usblib/Debug && $(MAKE) all
-	-cd D:/Software\ Projects/ArmTI/driverlib/Debug && $(MAKE) all
+	-cd D:/Software\ Projects/ArmTI/usblib/Debug && $(MAKE) clean all
+	-cd D:/Software\ Projects/ArmTI/driverlib/Debug && $(MAKE) clean all
 
 # Tool invocations
 usbSwarmControl.out: $(OBJS) $(LDS_SRCS) $(CMD_SRCS) $(GEN_CMDS) D:/Software\ Projects/ArmTI/usblib/Debug/usblib.lib D:/Software\ Projects/ArmTI/driverlib/Debug/driverlib.lib

@@ -554,16 +554,72 @@ bool readDataFromRobot(uint32_t * length, uint8_t * readData, uint32_t waitTime)
 // If wrong communication command between the host and this device is received,
 // it will call the signalUnhandleError() function.
 //*****************************************************************************
-inline void receiveDataFromRobot()
+inline void receiveDataFromRobotWithCommand()
 {
   uint32_t dataLength = convertByteToUINT32(&usbBufferHostToDevice[2]);
   uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
 
+  // Transfer the command and the data length to robot
   RF24_TX_activate();
   startTransmitDataToRobot(&usbBufferHostToDevice[1] , 5);
 
   RF24_RX_activate();
   rfDelayLoop(DELAY_CYCLES_130US);
+
+  uint32_t length = 0;
+  while(1)
+  {
+      if(readDataFromRobot(&length, usbBufferDeviceToHost, waitTime) == 0)
+      {   // Signal to the PC we failed to read data from robot
+          // The error signal is at the index 32 since the data read
+          // from robot will be in the range [0:31]
+          usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
+          USB_sendData(0);
+        break;
+      }
+
+      // Ready to receive data from PC
+      g_USBRxState = USB_RX_IDLE;
+
+      // Set the error byte to zero
+      usbBufferDeviceToHost[32] = 0;
+
+      // Send the received data to PC
+      USB_sendData(0);
+
+      // Did we receive all the requested data?
+      if( dataLength > length)
+      {
+        // No -> re-calculate the number of data need to be received
+        dataLength -= length;
+      }
+      else
+      {
+        // Yes -> the transmission finished successfully
+        break;
+      }
+
+      // Wait for the PC to be ready to receive the next data
+      while(g_USBRxState != USB_RX_DATA_AVAILABLE);
+
+      // Did we receive the right signal?
+      if(usbBufferHostToDevice[0] != RECEIVE_DATA_FROM_ROBOT_CONTINUE)
+      {
+        signalUnhandleError();
+      }
+  }
+}
+
+//*****************************************************************************
+// !COMMAND from the host
+// Receive data from other devices and transmit it to the host.
+//*****************************************************************************
+inline void receiveDataNoCommand()
+{
+  RF24_RX_activate();
+
+  uint32_t dataLength = convertByteToUINT32(&usbBufferHostToDevice[2]);
+  uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
 
   uint32_t length = 0;
   while(1)
@@ -668,8 +724,12 @@ void processUsbRequestFromHost(void)
                         transmitDataToRobot();
                         break;
 
-                case RECEIVE_DATA_FROM_ROBOT:
-                        receiveDataFromRobot();
+                case RECEIVE_DATA_FROM_ROBOT_WITH_COMMAND:
+                        receiveDataFromRobotWithCommand();
+                        break;
+
+                case RECEIVE_DATA_NO_COMMAND:
+                        receiveDataNoCommand();
                         break;
 
                 case START_DISTANCE_SENSING:

@@ -20,8 +20,8 @@ libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1
 libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/sysctl.h
 libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/systick.h
 libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/ssi.h
-libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Software\ Projects/ArmTI/usbSwarmControl/libnrf24l01/inc/nRF24L01.h
-libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Software\ Projects/ArmTI/usbSwarmControl/libnrf24l01/inc/TM4C123_nRF24L01.h
+libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Software\ Projects/TortoiseSVN/usbControlBoard/libnrf24l01/inc/nRF24L01.h
+libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Software\ Projects/TortoiseSVN/usbControlBoard/libnrf24l01/inc/TM4C123_nRF24L01.h
 libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/debug.h
 libnrf24l01/src/TM4C123_nRF24L01.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/fpu.h
 
@@ -45,7 +45,7 @@ D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/rom.h:
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/sysctl.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/systick.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/ssi.h: 
-D:/Software\ Projects/ArmTI/usbSwarmControl/libnrf24l01/inc/nRF24L01.h: 
-D:/Software\ Projects/ArmTI/usbSwarmControl/libnrf24l01/inc/TM4C123_nRF24L01.h: 
+D:/Software\ Projects/TortoiseSVN/usbControlBoard/libnrf24l01/inc/nRF24L01.h: 
+D:/Software\ Projects/TortoiseSVN/usbControlBoard/libnrf24l01/inc/TM4C123_nRF24L01.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/debug.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/fpu.h: 

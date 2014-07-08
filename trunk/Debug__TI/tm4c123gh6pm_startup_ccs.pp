@@ -22,7 +22,7 @@ tm4c123gh6pm_startup_ccs.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/d
 tm4c123gh6pm_startup_ccs.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/sysctl.h
 tm4c123gh6pm_startup_ccs.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/systick.h
 tm4c123gh6pm_startup_ccs.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/ssi.h
-tm4c123gh6pm_startup_ccs.obj: D:/Software\ Projects/ArmTI/usbSwarmControl/libnrf24l01/inc/nRF24L01.h
+tm4c123gh6pm_startup_ccs.obj: D:/Software\ Projects/TortoiseSVN/usbControlBoard/libnrf24l01/inc/nRF24L01.h
 tm4c123gh6pm_startup_ccs.obj: ../distanceSensing.h
 tm4c123gh6pm_startup_ccs.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/inc/hw_adc.h
 tm4c123gh6pm_startup_ccs.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/inc/hw_udma.h
@@ -54,7 +54,7 @@ D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/rom.h:
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/sysctl.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/systick.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/ssi.h: 
-D:/Software\ Projects/ArmTI/usbSwarmControl/libnrf24l01/inc/nRF24L01.h: 
+D:/Software\ Projects/TortoiseSVN/usbControlBoard/libnrf24l01/inc/nRF24L01.h: 
 ../distanceSensing.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/inc/hw_adc.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/inc/hw_udma.h: 

@@ -30,7 +30,7 @@ distanceSensing.obj: ../libnrf24l01/inc/TM4C123_nRF24L01.h
 distanceSensing.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/inc/hw_sysctl.h
 distanceSensing.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/fpu.h
 distanceSensing.obj: D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/systick.h
-distanceSensing.obj: D:/Software\ Projects/ArmTI/usbSwarmControl/libnrf24l01/inc/nRF24L01.h
+distanceSensing.obj: D:/Software\ Projects/TortoiseSVN/usbControlBoard/libnrf24l01/inc/nRF24L01.h
 distanceSensing.obj: ../distanceSensing.h
 distanceSensing.obj: ../CustomTivaDrivers.h
 
@@ -64,6 +64,6 @@ D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/debug.h:
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/inc/hw_sysctl.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/fpu.h: 
 D:/Google\ Drive/Work/ARM/TI/SW-TM4C-2.0.1.11577/driverlib/systick.h: 
-D:/Software\ Projects/ArmTI/usbSwarmControl/libnrf24l01/inc/nRF24L01.h: 
+D:/Software\ Projects/TortoiseSVN/usbControlBoard/libnrf24l01/inc/nRF24L01.h: 
 ../distanceSensing.h: 
 ../CustomTivaDrivers.h: 
