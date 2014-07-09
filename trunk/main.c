@@ -25,7 +25,7 @@
 
 #include "usb_swarm_control_structs.h"
 #include "ConstantDefinitions.h"
-#include "distanceSensing.h"
+//#include "distanceSensing.h"
 #include "libnrf24l01/inc/nRF24L01.h"
 #include "libnrf24l01/inc/TM4C123_nRF24L01.h"
 #include "CustomTivaDrivers.h"
@@ -92,14 +92,6 @@ uint8_t usbBufferHostToDevice[USB_BUFFER_SIZE];
 uint8_t usbBufferDeviceToHost[USB_BUFFER_SIZE];
 
 //*****************************************************************************
-// These variables hold the transmission state between the host and the device
-//*****************************************************************************
-bool g_bulkSendFlag = false;
-bool g_bulkReceiveFlag = false;
-
-uint32_t g_uibulkSendPacketCounter;
-
-//*****************************************************************************
 // The variable used to store error information of the uDMA
 //*****************************************************************************
 uint32_t g_ui32uDMAErrCount = 0;
@@ -108,12 +100,6 @@ uint32_t g_ui32uDMAErrCount = 0;
 // The buffer to receive data from the RF module
 //*****************************************************************************
 uint8_t RF24_RX_buffer[32];
-
-//*****************************************************************************
-// The buffers for ADCs
-//*****************************************************************************
-uint16_t g_ui16ADC0Result[NUMBER_OF_SAMPLE];
-uint16_t g_ui16ADC1Result[NUMBER_OF_SAMPLE];
 
 //*****************************************************************************
 // Signal to the user that we have encounter an unhandled error
@@ -488,7 +474,7 @@ inline void transmitDataToRobot()
 
   if (numberOfTransmittedBytes > MAX_ALLOWED_DATA_LENGTH)
   {
-      sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_FAILED);
+      signalUnhandleError();
       return;
   }
 
@@ -661,39 +647,6 @@ inline void receiveDataNoCommand()
 }
 
 //*****************************************************************************
-// !COMMAND from the host
-// !!!!!!!!TEMPORARY used with STM32F board!!!!!!!!!!
-// Send a signal to start distance sensing. Upon receiving a feedback signal
-// ADCs are enabled to start sampling from the opamps
-//*****************************************************************************
-inline void startDistanceSensing()
-{
-  RF24_TX_activate();
-  uint8_t command;
-  command = START_DISTANCE_SENSING;
-  startTransmitDataToRobot(&command, 1);
-
-  RF24_RX_activate();
-
-  uint32_t length;
-  if(readDataFromRobot(&length, RF24_RX_buffer, SYSTICKS_PER_SECOND))
-  {
-      if(RF24_RX_buffer[0] == START_DISTANCE_SENSING)
-      {
-    	  DistanceSensing_start();
-          sendResponeToHost(START_DISTANCE_SENSING_OK);
-          return;
-      }
-
-      sendResponeToHost(START_DISTANCE_SENSING_INVALID_RESPONE_FROM_ROBOT);
-      return;
-  }
-
-  sendResponeToHost(START_DISTANCE_SENSING_NO_RESPONE_FROM_ROBOT);
-  return;
-}
-
-//*****************************************************************************
 // This function receive command from the host and point to the appropriate
 // command handle.
 // It will call the signalUnhandleError() function, if a command does not belong
@@ -725,10 +678,6 @@ void processUsbRequestFromHost(void)
 
                 case RECEIVE_DATA_NO_COMMAND:
                         receiveDataNoCommand();
-                        break;
-
-                case START_DISTANCE_SENSING:
-                        startDistanceSensing();
                         break;
 
                 default:
@@ -769,6 +718,10 @@ inline void initRfModule()
 
   uint8_t addr[3] =  {0xDE, 0xAD, 0xBE};
   RF24_RX_setAddress(RF24_PIPE0, addr);
+
+  addr[0] = 0x0E;
+  addr[1] = 0xAC;
+  addr[2] = 0xC1;
   RF24_TX_setAddress(addr);
 }
 
@@ -817,8 +770,6 @@ inline void initSystem()
   initUSB();
 
   initRfModule();
-
-  DistanceSensing_initModules();
 }
 
 int main(void)
@@ -850,17 +801,4 @@ inline void RF24_IntHandler()
 {
 	// Unexpected interrupt on the RF24_INT_Channel
 	signalUnhandleError();
-}
-
-void uDMAErrorHandler(void)
-{
-  uint32_t ui32Status;
-
-  ui32Status = uDMAErrorStatusGet();
-
-  if (ui32Status)
-  {
-      uDMAErrorStatusClear();
-      g_ui32uDMAErrCount++;
-  }
 }

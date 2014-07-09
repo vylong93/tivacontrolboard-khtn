@@ -10,8 +10,6 @@
 #define CONFIGURE_RF		0x13
 #define CONFIGURE_SPI		0x14
 
-#define START_DISTANCE_SENSING  0x5A
-
 //*****************************************************************************
 // ACK signals between the control board and the PC software
 //*****************************************************************************
@@ -25,10 +23,6 @@
 
 #define RECEIVE_DATA_FROM_ROBOT_ERROR     0xEE
 #define RECEIVE_DATA_FROM_ROBOT_CONTINUE  0xAE
-
-#define START_DISTANCE_SENSING_OK         0x5A
-#define START_DISTANCE_SENSING_NO_RESPONE_FROM_ROBOT    0x50
-#define START_DISTANCE_SENSING_INVALID_RESPONE_FROM_ROBOT    0x53
 
 //*****************************************************************************
 // The size of the buffers used by USB Device Driver

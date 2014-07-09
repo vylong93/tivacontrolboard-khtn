@@ -44,9 +44,9 @@ static void IntDefaultHandler(void);
 extern void SysTickHandler(void);
 extern void USB0DeviceIntHandler(void);
 extern void GPIOEIntHandler();
-extern void ADC0IntHandler(void);
-extern void ADC1IntHandler(void);
-extern void uDMAErrorHandler(void);
+//extern void ADC0IntHandler(void);
+//extern void ADC1IntHandler(void);
+//extern void uDMAErrorHandler(void);
 
 //*****************************************************************************
 //
@@ -107,7 +107,7 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // ADC Sequence 0
     IntDefaultHandler,                      // ADC Sequence 1
     IntDefaultHandler,                      // ADC Sequence 2
-    ADC0IntHandler,                      // ADC Sequence 3
+    IntDefaultHandler,                      // ADC Sequence 3
     IntDefaultHandler,                      // Watchdog timer
     IntDefaultHandler,                      // Timer 0 subtimer A
     IntDefaultHandler,                      // Timer 0 subtimer B
@@ -137,11 +137,11 @@ void (* const g_pfnVectors[])(void) =
     USB0DeviceIntHandler,                      // USB0
     IntDefaultHandler,                      // PWM Generator 3
     IntDefaultHandler,                      // uDMA Software Transfer
-    uDMAErrorHandler,                      // uDMA Error
+    IntDefaultHandler,                      // uDMA Error
     IntDefaultHandler,                      // ADC1 Sequence 0
     IntDefaultHandler,                      // ADC1 Sequence 1
     IntDefaultHandler,                      // ADC1 Sequence 2
-    ADC1IntHandler,                      // ADC1 Sequence 3
+    IntDefaultHandler,                      // ADC1 Sequence 3
     0,                                      // Reserved
     0,                                      // Reserved
     IntDefaultHandler,                      // GPIO Port J
