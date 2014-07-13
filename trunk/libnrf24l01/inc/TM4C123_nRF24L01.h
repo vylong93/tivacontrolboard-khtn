@@ -19,32 +19,10 @@
 #ifndef _TM4C123_NRF24L01_H
 #define _TM4C123_NRF24L01_H
 
+// Settings for 50MHz System Clock
 #define DELAY_CYCLES_5MS       250000
 #define DELAY_CYCLES_130US     6500
 #define DELAY_CYCLES_15US      750
-
-//#define RF24_SPI_PORT_CLOCK    SYSCTL_PERIPH_GPIOD
-//#define RF24_SPI_PORT          GPIO_PORTD_BASE
-//#define RF24_CSN                GPIO_PIN_1
-//#define RF24_SCK                GPIO_PIN_0
-//#define RF24_MISO               GPIO_PIN_2
-//#define RF24_MOSI               GPIO_PIN_3
-//
-//#define RF24_CSN_CONFIGURE      GPIO_PD1_SSI1FSS
-//#define RF24_SCK_CONFIGURE      GPIO_PD0_SSI1CLK
-//#define RF24_MISO_CONFIGURE     GPIO_PD2_SSI1RX
-//#define RF24_MOSI_CONFIGURE     GPIO_PD3_SSI1TX
-//
-//#define RF24_INT_PORT_CLOCK    SYSCTL_PERIPH_GPIOE
-//#define RF24_INT_PORT          GPIO_PORTE_BASE
-//#define RF24_CE                 GPIO_PIN_4
-//#define RF24_INT_Pin            GPIO_PIN_5
-//#define RF24_INT                INT_GPIOE
-//#define RF24_INT_Channel        GPIO_INT_PIN_5
-//
-//#define RF24_SPI_CLOCK          SYSCTL_PERIPH_SSI1
-//#define RF24_SPI                SSI1_BASE
-//#define RF24_SPI_BAUDRATE       1000000
 
 #define RF24_SPI_PORT_CLOCK     SYSCTL_PERIPH_GPIOA
 #define RF24_SPI_PORT           GPIO_PORTA_BASE
@@ -53,8 +31,8 @@
 #define RF24_MISO               GPIO_PIN_4
 #define RF24_MOSI               GPIO_PIN_5
 
-#define RF24_SCK_CONFIGURE      GPIO_PA2_SSI0CLK
 #define RF24_CSN_CONFIGURE      GPIO_PA3_SSI0FSS
+#define RF24_SCK_CONFIGURE      GPIO_PA2_SSI0CLK
 #define RF24_MISO_CONFIGURE     GPIO_PA4_SSI0RX
 #define RF24_MOSI_CONFIGURE     GPIO_PA5_SSI0TX
 
@@ -68,7 +46,6 @@
 #define RF24_SPI_CLOCK          SYSCTL_PERIPH_SSI0
 #define RF24_SPI                SSI0_BASE
 #define RF24_SPI_BAUDRATE       2000000
-
 // There are two ways to implement RF24 interrupt handler:
 // 1) (Recommend!) the interupt handler make a call to this function.
 // 2) (Not recommend) put this directly to the NVIC table in the startup file.

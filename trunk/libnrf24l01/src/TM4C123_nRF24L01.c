@@ -24,41 +24,42 @@ static char CEState;
 
 inline void initSpiForRF(bool interruptEnable)
 {
-  // Enable the SSI module used by the RF board
-  SysCtlPeripheralEnable(RF24_SPI_CLOCK);
-  rfDelayLoop(1);
   // Enable the ports used by the RF board
   SysCtlPeripheralEnable(RF24_SPI_PORT_CLOCK);
   rfDelayLoop(1);
-  if(RF24_INT_PORT_CLOCK != RF24_SPI_PORT_CLOCK)
+  if(RF24_SPI_PORT_CLOCK != RF24_INT_PORT_CLOCK)
   {
     SysCtlPeripheralEnable(RF24_INT_PORT_CLOCK);
     rfDelayLoop(1);
   }
 
+  // Enable the SSI module used by the RF board
+  SysCtlPeripheralEnable(RF24_SPI_CLOCK);
+  rfDelayLoop(3);
+
   // Disable the SSI to config
   SSIDisable(RF24_SPI);
-  rfDelayLoop(5);
-
-  //We use soft SPI
-  GPIOPinTypeGPIOOutput(RF24_SPI_PORT, RF24_CSN);
+  rfDelayLoop(2);
 
   // Connect mux pins to the targeted SSI module
   GPIOPinConfigure(RF24_SCK_CONFIGURE);
   GPIOPinConfigure(RF24_MISO_CONFIGURE);
   GPIOPinConfigure(RF24_MOSI_CONFIGURE);
 
+  // Cofigure SSI pins
+  GPIOPinTypeSSI(RF24_SPI_PORT, RF24_SCK | RF24_MISO | RF24_MOSI);
+
+  // Configure the SSI port for SPI master mode.
+  SSIConfigSetExpClk(RF24_SPI, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0, SSI_MODE_MASTER, RF24_SPI_BAUDRATE, 8);
+
   // Configure the interrupt pin as input
   GPIOPinTypeGPIOInput(RF24_INT_PORT, RF24_INT_Pin);
 
+  //We use soft SPI
+  GPIOPinTypeGPIOOutput(RF24_SPI_PORT, RF24_CSN);
+
   // Configure the CE pin
   GPIOPinTypeGPIOOutput(RF24_INT_PORT, RF24_CE);
-
-  // Cofigure SSI pins
-  GPIOPinTypeSSI(RF24_SPI_PORT, RF24_SCK | RF24_MISO |RF24_MOSI);
-
-  // Configure and enable the SSI port for SPI master mode.
-  SSIConfigSetExpClk(RF24_SPI, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0, SSI_MODE_MASTER, RF24_SPI_BAUDRATE, 8);
 
   if(interruptEnable)
   {

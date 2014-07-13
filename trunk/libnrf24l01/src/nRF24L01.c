@@ -203,7 +203,7 @@ void RF24_clearIrqFlag (unsigned char irqflag)
     setRfCSN();
 }
 
-inline unsigned char RF24_readRegister(unsigned char addr)
+unsigned char RF24_readRegister(unsigned char addr)
 {
     unsigned char i;
     clearRfCSN();
@@ -226,7 +226,7 @@ void RF24_TX_setAddress(unsigned char *addr)
     signed char i;
     clearRfCSN();
     status = SPI_sendAndGetData(RF24_REG_TX_ADDR | RF24_COMMAND_W_REGISTER);
-    for (i = addressWidth-1; i >= 0; i--)
+    for (i = 0; i < addressWidth; i++)
     {
         SPI_sendAndGetData(addr[i]);
     }
@@ -279,6 +279,7 @@ void RF24_TX_activate()
     RF24_TX_flush();
     RF24_setConfigureRegister(crcConfig | RF24_PWR_UP | RF24_PRIM_TX);
     RF24_clearIrqFlag(RF24_IRQ_TX | RF24_IRQ_MAX_RETRANS);
+    clearRfCE();
 }
 
 void RF24_TX_pulseTransmit()
@@ -303,7 +304,7 @@ void RF24_RX_setAddress(unsigned char pipe, unsigned char *addr)
     }
     else
     {
-        for (i=addressWidth-1; i>=0; i--)
+        for (i = 0; i < addressWidth; i++)
         {
             SPI_sendAndGetData(addr[i]);
         }
