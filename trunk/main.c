@@ -271,7 +271,9 @@ SwarmControlReceiveEventHandler(void *pvCBData, uint32_t ui32Event, uint32_t ui3
 
         default:
         {
-          signalUnhandleError();
+          //signalUnhandleError();
+        	while(1)
+        	GPIOPinWrite(LED_PORT, ALL_LED, ALL_LED);
         }
     }
 
@@ -597,11 +599,12 @@ inline void receiveDataFromRobotWithCommand()
 //*****************************************************************************
 inline void receiveDataNoCommand()
 {
-  RF24_RX_activate();
-
   uint32_t dataLength = convertByteToUINT32(&usbBufferHostToDevice[2]);
   uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
 
+  RF24_RX_activate();
+  rfDelayLoop(DELAY_CYCLES_130US);
+  
   uint32_t length = 0;
   while(1)
   {
@@ -716,13 +719,11 @@ inline void initRfModule()
   // Open pipe#0 with Enhanced ShockBurst enabled for receiving Auto-ACKs
   RF24_PIPE_open(RF24_PIPE0, true);
 
-  uint8_t addr[3] =  {0xDE, 0xAD, 0xBE};
-  RF24_RX_setAddress(RF24_PIPE0, addr);
-
-  addr[0] = 0x0E;
-  addr[1] = 0xAC;
-  addr[2] = 0xC1;
-  RF24_TX_setAddress(addr);
+  uint8_t TxAddrControlBoard[3] = {0xDE, 0xAD, 0xBE};
+  uint8_t RxAddrControlBoard[3] = {0x0E, 0xAC, 0xC1};
+  
+  RF24_TX_setAddress(TxAddrControlBoard);
+  RF24_RX_setAddress(RF24_PIPE0, RxAddrControlBoard);
 }
 
 //*****************************************************************************
