@@ -43,6 +43,10 @@
 extern uint32_t
 convertByteToUINT32(uint8_t data[]);
 
+#define RF24_CONTOLBOARD_ADDR_BYTE2	0xC1
+#define RF24_CONTOLBOARD_ADDR_BYTE1	0xAC
+#define RF24_CONTOLBOARD_ADDR_BYTE0	0x02
+
 //*****************************************************************************
 // Tiva C Series launchpad TM4C123G, RGB LED port definition
 //*****************************************************************************
