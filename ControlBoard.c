@@ -98,7 +98,7 @@ inline void initRfModule(void)
 	initRf24.Features = RF24_FEATURE_EN_DYNAMIC_PAYLOAD
 			| RF24_FEATURE_EN_NO_ACK_COMMAND;
 	initRf24.InterruptEnable = false;
-	initRf24.LNAGainEnable = false;
+	initRf24.LNAGainEnable = true;
 	RF24_init(&initRf24);
 
 	// Set 2 pipes dynamic payload
@@ -349,6 +349,7 @@ void receiveDataFromRobot(bool haveCommand)
 			}
 		}
 	}
+	RF24_TX_flush();
 	RF24_RX_activate();
 	// rfDelayLoop(DELAY_CYCLES_130US);
 	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);

@@ -86,4 +86,8 @@ void rfDelayLoop (uint32_t delay);
 // through this function instead of reading pin value.
 char getCEState();
 
+void disableRF24Interrupt();
+
+void enableRF24Interrupt();
+
 #endif //_TM4C123_NRF24L01_H
