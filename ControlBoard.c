@@ -44,6 +44,9 @@ uint8_t usbBufferDeviceToHost[USB_BUFFER_SIZE];
 uint8_t g_ui8RxBuffer[32];
 uint8_t g_ui8RxLength;
 
+char g_BluetoothBuffer[BLUETOOTH_BUFFER_SIZE];
+uint8_t g_ui8BluetoothCounter = 0;
+
 inline void initSystem(void)
 {
 	// Set the clocking to run from the PLL at 50MHz.
@@ -77,11 +80,47 @@ inline void initSystem(void)
 	IntMasterEnable();
 // Testing Only ==============================================
 
+	initBluetooth();
+
 	initUSB();
 
 	initRfModule();
 
 	RF24_TX_activate();
+}
+
+inline void initBluetooth(void)
+{
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_UART2);
+
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+
+	// unlock the GPIO commit control register to modify PD7 configuration.
+	HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
+	HWREG(GPIO_PORTD_BASE + GPIO_O_CR) |= 0x80;
+	HWREG(GPIO_PORTD_BASE + GPIO_O_AFSEL) &= ~0x80;
+	HWREG(GPIO_PORTD_BASE + GPIO_O_DEN) |= 0x80;
+	HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = 0;
+
+	GPIOPinConfigure(GPIO_PD6_U2RX);
+	GPIOPinConfigure(GPIO_PD7_U2TX);
+
+	GPIOPinTypeUART(GPIO_PORTD_BASE, GPIO_PIN_6 | GPIO_PIN_7);
+	GPIOPadConfigSet(GPIO_PORTD_BASE, GPIO_PIN_6 | GPIO_PIN_7,
+			GPIO_STRENGTH_2MA,
+			GPIO_PIN_TYPE_STD_WPU);
+
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+		GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_5);
+		GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_5, 0);
+
+	UARTConfigSetExpClk(UART2_BASE, SysCtlClockGet(), 115200,
+			(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+	SysCtlDelay(SysCtlClockGet() / 3);
+
+	IntEnable(INT_UART2); //enable the UART interrupt
+
+	UARTIntEnable(UART2_BASE, UART_INT_RX | UART_INT_RT); //only enable RX and TX interrupts
 }
 
 inline void initRfModule(void)
@@ -672,40 +711,6 @@ void signalUnhandleError(void)
 void SysTickHandler(void)
 {
 	g_ui32SysTickCount++;
-}
-
-void LaunchpadButtonIntHandler(void)
-{
-	// Testing only
-
-	RF24_TX_activate();
-
-	SysCtlDelay(533333);  // ~100ms debound
-
-	unsigned char buff = 0xFC; 					// set Distance measure command
-	RF24_TX_writePayloadNoAck(1, &buff);
-	RF24_TX_pulseTransmit();
-
-	while (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) != 0)
-		;
-
-	if (RF24_getIrqFlag(RF24_IRQ_TX))
-	{
-		GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
-	}
-
-	if (RF24_getIrqFlag(RF24_IRQ_MAX_RETRANS))
-	{
-		GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
-	}
-
-	RF24_clearIrqFlag(RF24_IRQ_MASK);
-
-	SysCtlDelay(533333);  // ~100ms debound
-
-	RF24_RX_activate();
-
-	GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
 }
 
 #endif /* CONTROLBOARD_C_ */

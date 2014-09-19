@@ -28,6 +28,7 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/timer.h"
 #include "driverlib/usb.h"
+#include "driverlib/uart.h"
 
 #include "usblib/usblib.h"
 #include "usblib/usbhid.h"
@@ -42,6 +43,8 @@
 
 extern uint32_t
 convertByteToUINT32(uint8_t data[]);
+
+#define SMART_PHONE_REQUEST_CONFIG	0xAA // 0xF0 is reserved
 
 #define RF24_CONTOLBOARD_ADDR_BYTE2	0xC1
 #define RF24_CONTOLBOARD_ADDR_BYTE1	0xAC
@@ -100,12 +103,15 @@ convertByteToUINT32(uint8_t data[]);
 //*****************************************************************************
 #define MAX_ALLOWED_DATA_LENGTH 32
 
+#define BLUETOOTH_BUFFER_SIZE 34 // RF data + 2 end char (\r\n) 0x0D 0x0A
 inline void
 initSystem(void);
 inline void
 initRfModule(void);
 inline void
 initUSB(void);
+inline void
+initBluetooth(void);
 
 //*****************************************************************************
 // !COMMAND from the host
