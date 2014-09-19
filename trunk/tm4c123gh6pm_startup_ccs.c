@@ -57,6 +57,7 @@ extern uint32_t __STACK_TOP;
 // To be added by user
 extern void SysTickHandler(void);
 extern void USB0DeviceIntHandler(void);
+extern void BluetoothIntHandler(void);
 extern void LaunchpadButtonIntHandler(void);	// Testing Only
 
 //*****************************************************************************
@@ -119,7 +120,7 @@ void (* const g_pfnVectors[])(void) =
     LaunchpadButtonIntHandler,                      // GPIO Port F
     IntDefaultHandler,                      // GPIO Port G
     IntDefaultHandler,                      // GPIO Port H
-    IntDefaultHandler,                      // UART2 Rx and Tx
+    BluetoothIntHandler,                      // UART2 Rx and Tx
     IntDefaultHandler,                      // SSI1 Rx and Tx
     IntDefaultHandler,                      // Timer 3 subtimer A
     IntDefaultHandler,                      // Timer 3 subtimer B
