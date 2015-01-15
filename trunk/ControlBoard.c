@@ -47,6 +47,8 @@ uint8_t g_ui8RxLength;
 char g_BluetoothBuffer[BLUETOOTH_BUFFER_SIZE];
 uint8_t g_ui8BluetoothCounter = 0;
 
+eProtocol g_eCurrentProtocol = PROTOCOL_NORMAL;
+
 inline void initSystem(void)
 {
 	// Set the clocking to run from the PLL at 50MHz.
@@ -84,9 +86,9 @@ inline void initSystem(void)
 
 	initUSB();
 
-	initRfModule();
+	initRfModule(false);
 
-	RF24_TX_activate();
+//	RF24_TX_activate();
 }
 
 inline void initBluetooth(void)
@@ -123,78 +125,78 @@ inline void initBluetooth(void)
 	UARTIntEnable(UART2_BASE, UART_INT_RX | UART_INT_RT); //only enable RX and TX interrupts
 }
 
-inline void initRfModule(void)
-{
-	RF24_InitTypeDef initRf24;
-	initRf24.AddressWidth = RF24_ADRESS_WIDTH_3;
-	initRf24.Channel = RF24_CHANNEL_0;
-	initRf24.CrcBytes = RF24_CRC_2BYTES;
-	initRf24.CrcState = RF24_CRC_EN;
-	initRf24.RetransmitCount = RF24_RETRANS_COUNT15;
-	initRf24.RetransmitDelay = RF24_RETRANS_DELAY_250u;
-	initRf24.Speed = RF24_SPEED_1MBPS;
-	initRf24.Power = RF24_POWER_0DBM;
-	initRf24.Features = RF24_FEATURE_EN_DYNAMIC_PAYLOAD
-			| RF24_FEATURE_EN_NO_ACK_COMMAND;
-	initRf24.InterruptEnable = false;
-	initRf24.LNAGainEnable = true;
-	RF24_init(&initRf24);
-
-	// Set 2 pipes dynamic payload
-	RF24_PIPE_setPacketSize(RF24_PIPE0, RF24_PACKET_SIZE_DYNAMIC);
-	RF24_PIPE_setPacketSize(RF24_PIPE1, RF24_PACKET_SIZE_DYNAMIC);
-
-	// Open pipe#0, 1 with Enhanced ShockBurst enabled for receiving Auto-ACKs
-	RF24_PIPE_open(RF24_PIPE0, true);
-	RF24_PIPE_open(RF24_PIPE1, true);
-
-	uint8_t addr[3];
-
-	addr[2] = RF24_CONTOLBOARD_ADDR_BYTE2;
-	addr[1] = RF24_CONTOLBOARD_ADDR_BYTE1;
-	addr[0] = RF24_CONTOLBOARD_ADDR_BYTE0;
-	RF24_RX_setAddress(RF24_PIPE1, addr);
-
-	addr[2] = RF24_GLOBAL_BOARDCAST_BYTE2;
-	addr[1] = RF24_GLOBAL_BOARDCAST_BYTE1;
-	addr[0] = RF24_GLOBAL_BOARDCAST_BYTE0;
-	RF24_RX_setAddress(RF24_PIPE0, addr);
-	RF24_TX_setAddress(addr);
-
-	RF24_RX_activate();
-
-//		uint32_t g_ui32AddressTX;
-//		uint32_t g_ui32AddressPipe[6];
+//inline void initRfModule(void)
+//{
+//	RF24_InitTypeDef initRf24;
+//	initRf24.AddressWidth = RF24_ADRESS_WIDTH_3;
+//	initRf24.Channel = RF24_CHANNEL_0;
+//	initRf24.CrcBytes = RF24_CRC_2BYTES;
+//	initRf24.CrcState = RF24_CRC_EN;
+//	initRf24.RetransmitCount = RF24_RETRANS_COUNT15;
+//	initRf24.RetransmitDelay = RF24_RETRANS_DELAY_250u;
+//	initRf24.Speed = RF24_SPEED_1MBPS;
+//	initRf24.Power = RF24_POWER_0DBM;
+//	initRf24.Features = RF24_FEATURE_EN_DYNAMIC_PAYLOAD
+//			| RF24_FEATURE_EN_NO_ACK_COMMAND;
+//	initRf24.InterruptEnable = false;
+//	initRf24.LNAGainEnable = true;
+//	RF24_init(&initRf24);
 //
-//		clearRfCSN();
-//	    SPI_sendAndGetData((RF24_REG_TX_ADDR & RF24_REG_MASK) | RF24_COMMAND_R_REGISTER);
-//		g_ui32AddressTX  = SPI_sendAndGetData(RF24_COMMAND_NOP) & 0x0000FF;
-//		g_ui32AddressTX |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 8;
-//		g_ui32AddressTX |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 16;
-//		setRfCSN();
+//	// Set 2 pipes dynamic payload
+//	RF24_PIPE_setPacketSize(RF24_PIPE0, RF24_PACKET_SIZE_DYNAMIC);
+//	RF24_PIPE_setPacketSize(RF24_PIPE1, RF24_PACKET_SIZE_DYNAMIC);
 //
-//		clearRfCSN();
-//	    SPI_sendAndGetData((RF24_REG_RX_ADDR_P0 & RF24_REG_MASK) | RF24_COMMAND_R_REGISTER);
-//		g_ui32AddressPipe[0]  = SPI_sendAndGetData(RF24_COMMAND_NOP) & 0x0000FF;
-//		g_ui32AddressPipe[0] |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 8;
-//		g_ui32AddressPipe[0] |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 16;
-//		setRfCSN();
+//	// Open pipe#0, 1 with Enhanced ShockBurst enabled for receiving Auto-ACKs
+//	RF24_PIPE_open(RF24_PIPE0, true);
+//	RF24_PIPE_open(RF24_PIPE1, true);
 //
-//		clearRfCSN();
-//	    SPI_sendAndGetData((RF24_REG_RX_ADDR_P1 & RF24_REG_MASK) | RF24_COMMAND_R_REGISTER);
-//		g_ui32AddressPipe[1]  = SPI_sendAndGetData(RF24_COMMAND_NOP) & 0x0000FF;
-//		g_ui32AddressPipe[1] |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 8;
-//		g_ui32AddressPipe[1] |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 16;
-//		setRfCSN();
+//	uint8_t addr[3];
 //
-//		g_ui32AddressPipe[2] = (g_ui32AddressPipe[1] & 0xFFFF00) | RF24_readRegister(RF24_REG_RX_ADDR_P2);
+//	addr[2] = RF24_CONTOLBOARD_ADDR_BYTE2;
+//	addr[1] = RF24_CONTOLBOARD_ADDR_BYTE1;
+//	addr[0] = RF24_CONTOLBOARD_ADDR_BYTE0;
+//	RF24_RX_setAddress(RF24_PIPE1, addr);
 //
-//		g_ui32AddressPipe[3] = (g_ui32AddressPipe[1] & 0xFFFF00) | RF24_readRegister(RF24_REG_RX_ADDR_P3);
+//	addr[2] = RF24_GLOBAL_BOARDCAST_BYTE2;
+//	addr[1] = RF24_GLOBAL_BOARDCAST_BYTE1;
+//	addr[0] = RF24_GLOBAL_BOARDCAST_BYTE0;
+//	RF24_RX_setAddress(RF24_PIPE0, addr);
+//	RF24_TX_setAddress(addr);
 //
-//		g_ui32AddressPipe[4] = (g_ui32AddressPipe[1] & 0xFFFF00) | RF24_readRegister(RF24_REG_RX_ADDR_P4);
+//	RF24_RX_activate();
 //
-//		g_ui32AddressPipe[5] = (g_ui32AddressPipe[1] & 0xFFFF00) | RF24_readRegister(RF24_REG_RX_ADDR_P5);
-}
+////		uint32_t g_ui32AddressTX;
+////		uint32_t g_ui32AddressPipe[6];
+////
+////		clearRfCSN();
+////	    SPI_sendAndGetData((RF24_REG_TX_ADDR & RF24_REG_MASK) | RF24_COMMAND_R_REGISTER);
+////		g_ui32AddressTX  = SPI_sendAndGetData(RF24_COMMAND_NOP) & 0x0000FF;
+////		g_ui32AddressTX |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 8;
+////		g_ui32AddressTX |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 16;
+////		setRfCSN();
+////
+////		clearRfCSN();
+////	    SPI_sendAndGetData((RF24_REG_RX_ADDR_P0 & RF24_REG_MASK) | RF24_COMMAND_R_REGISTER);
+////		g_ui32AddressPipe[0]  = SPI_sendAndGetData(RF24_COMMAND_NOP) & 0x0000FF;
+////		g_ui32AddressPipe[0] |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 8;
+////		g_ui32AddressPipe[0] |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 16;
+////		setRfCSN();
+////
+////		clearRfCSN();
+////	    SPI_sendAndGetData((RF24_REG_RX_ADDR_P1 & RF24_REG_MASK) | RF24_COMMAND_R_REGISTER);
+////		g_ui32AddressPipe[1]  = SPI_sendAndGetData(RF24_COMMAND_NOP) & 0x0000FF;
+////		g_ui32AddressPipe[1] |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 8;
+////		g_ui32AddressPipe[1] |= SPI_sendAndGetData(RF24_COMMAND_NOP) << 16;
+////		setRfCSN();
+////
+////		g_ui32AddressPipe[2] = (g_ui32AddressPipe[1] & 0xFFFF00) | RF24_readRegister(RF24_REG_RX_ADDR_P2);
+////
+////		g_ui32AddressPipe[3] = (g_ui32AddressPipe[1] & 0xFFFF00) | RF24_readRegister(RF24_REG_RX_ADDR_P3);
+////
+////		g_ui32AddressPipe[4] = (g_ui32AddressPipe[1] & 0xFFFF00) | RF24_readRegister(RF24_REG_RX_ADDR_P4);
+////
+////		g_ui32AddressPipe[5] = (g_ui32AddressPipe[1] & 0xFFFF00) | RF24_readRegister(RF24_REG_RX_ADDR_P5);
+//}
 
 inline void initUSB(void)
 {
@@ -216,59 +218,59 @@ inline void initUSB(void)
 
 void configureSPI(void)
 {
-	uint32_t spiProtocol = usbBufferHostToDevice[1];
-	uint32_t spiClock = usbBufferHostToDevice[2];
-	spiClock = spiClock << 8;
-	spiClock |= usbBufferHostToDevice[3];
-	spiClock = spiClock << 8;
-	spiClock |= usbBufferHostToDevice[4];
-	spiClock = spiClock << 8;
-	spiClock |= usbBufferHostToDevice[5];
-	uint32_t spiDataWidth = usbBufferHostToDevice[6];
-	uint32_t spiMode = SSI_MODE_MASTER;
-
-	SSIDisable(RF24_SPI);
-
-	// Configure and enable the SSI port for SPI master mode.
-	SSIConfigSetExpClk(RF24_SPI, SysCtlClockGet(), spiProtocol, spiMode,
-			spiClock, spiDataWidth);
-
-	SSIEnable(RF24_SPI);
+//	uint32_t spiProtocol = usbBufferHostToDevice[1];
+//	uint32_t spiClock = usbBufferHostToDevice[2];
+//	spiClock = spiClock << 8;
+//	spiClock |= usbBufferHostToDevice[3];
+//	spiClock = spiClock << 8;
+//	spiClock |= usbBufferHostToDevice[4];
+//	spiClock = spiClock << 8;
+//	spiClock |= usbBufferHostToDevice[5];
+//	uint32_t spiDataWidth = usbBufferHostToDevice[6];
+//	uint32_t spiMode = SSI_MODE_MASTER;
+//
+//	SSIDisable(RF24_SPI);
+//
+//	// Configure and enable the SSI port for SPI master mode.
+//	SSIConfigSetExpClk(RF24_SPI, SysCtlClockGet(), spiProtocol, spiMode,
+//			spiClock, spiDataWidth);
+//
+//	SSIEnable(RF24_SPI);
 
 	sendResponeToHost(CONFIGURE_SPI_OK);
 }
 
 void configureRF(void)
 {
-	RF24_InitTypeDef initRf24;
-	initRf24.CrcBytes = usbBufferHostToDevice[1];
-	initRf24.AddressWidth = usbBufferHostToDevice[2] - 2;
-	initRf24.Channel = usbBufferHostToDevice[3];
-
-	initRf24.CrcState = usbBufferHostToDevice[4];
-	initRf24.Speed = usbBufferHostToDevice[5];
-	initRf24.Power = usbBufferHostToDevice[6];
-	initRf24.LNAGainEnable = usbBufferHostToDevice[7];
-	initRf24.RetransmitCount = RF24_RETRANS_COUNT15;
-	initRf24.RetransmitDelay = RF24_RETRANS_DELAY_250u;
-	initRf24.Features = RF24_FEATURE_EN_DYNAMIC_PAYLOAD
-			| RF24_FEATURE_EN_NO_ACK_COMMAND;
-	initRf24.InterruptEnable = false;
-	RF24_init(&initRf24);
-
-	// Set 2 pipes dynamic payload
-	RF24_PIPE_setPacketSize(RF24_PIPE0, RF24_PACKET_SIZE_DYNAMIC);
-	RF24_PIPE_setPacketSize(RF24_PIPE1, RF24_PACKET_SIZE_DYNAMIC);
-
-	// Open pipe#0, 1 with Enhanced ShockBurst enabled for receiving Auto-ACKs
-	RF24_PIPE_open(RF24_PIPE0, true);
-	RF24_PIPE_open(RF24_PIPE1, true);
-
-	RF24_TX_setAddress(&usbBufferHostToDevice[8]);
-
-	RF24_RX_setAddress(RF24_PIPE0, &usbBufferHostToDevice[11]);
-
-	RF24_RX_activate();
+//	RF24_InitTypeDef initRf24;
+//	initRf24.CrcBytes = usbBufferHostToDevice[1];
+//	initRf24.AddressWidth = usbBufferHostToDevice[2] - 2;
+//	initRf24.Channel = usbBufferHostToDevice[3];
+//
+//	initRf24.CrcState = usbBufferHostToDevice[4];
+//	initRf24.Speed = usbBufferHostToDevice[5];
+//	initRf24.Power = usbBufferHostToDevice[6];
+//	initRf24.LNAGainEnable = usbBufferHostToDevice[7];
+//	initRf24.RetransmitCount = RF24_RETRANS_COUNT15;
+//	initRf24.RetransmitDelay = RF24_RETRANS_DELAY_250u;
+//	initRf24.Features = RF24_FEATURE_EN_DYNAMIC_PAYLOAD
+//			| RF24_FEATURE_EN_NO_ACK_COMMAND;
+//	initRf24.InterruptEnable = false;
+//	RF24_init(&initRf24);
+//
+//	// Set 2 pipes dynamic payload
+//	RF24_PIPE_setPacketSize(RF24_PIPE0, RF24_PACKET_SIZE_DYNAMIC);
+//	RF24_PIPE_setPacketSize(RF24_PIPE1, RF24_PACKET_SIZE_DYNAMIC);
+//
+//	// Open pipe#0, 1 with Enhanced ShockBurst enabled for receiving Auto-ACKs
+//	RF24_PIPE_open(RF24_PIPE0, true);
+//	RF24_PIPE_open(RF24_PIPE1, true);
+//
+//	RF24_TX_setAddress(&usbBufferHostToDevice[8]);
+//
+//	RF24_RX_setAddress(RF24_PIPE0, &usbBufferHostToDevice[11]);
+//
+//	RF24_RX_activate();
 
 	sendResponeToHost(CONFIGURE_RF_OK);
 
@@ -307,8 +309,59 @@ void configureRF(void)
 
 void transmitDataToRobot(void)
 {
-	RF24_TX_activate();
+//	RF24_TX_activate();
+//
+//	int32_t numberOfTransmittedBytes;
+//	uint32_t delayTimeBeforeSendResponeToPC;
+//
+//	numberOfTransmittedBytes = usbBufferHostToDevice[1];
+//	delayTimeBeforeSendResponeToPC = usbBufferHostToDevice[2];
+//
+//	if (numberOfTransmittedBytes > MAX_ALLOWED_DATA_LENGTH)
+//	{
+//		signalUnhandleError();
+//		return;
+//	}
+//
+//	uint32_t i;
+//	for (i = 0; i < numberOfTransmittedBytes; i++)
+//	{
+//		usbBufferHostToDevice[i] = usbBufferHostToDevice[3 + i];
+//	}
+//
+//	RF24_TX_writePayloadNoAck(numberOfTransmittedBytes, usbBufferHostToDevice);
+//
+//	RF24_TX_pulseTransmit();
+//
+//	g_ui32SysTickCount = 0;
+//
+//	while (g_ui32SysTickCount < SYSTICKS_PER_SECOND)
+//	{
+//		if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
+//		{
+//			if (RF24_getIrqFlag(RF24_IRQ_TX))
+//			{
+//				RF24_clearIrqFlag(RF24_IRQ_TX);
+//
+//				g_ui32SysTickCount = 0;
+//
+//				while (g_ui32SysTickCount < delayTimeBeforeSendResponeToPC)
+//					;
+//
+//				sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_DONE);
+//
+//				return;
+//			}
+//		}
+//	}
+//
+//	RF24_clearIrqFlag(RF24_IRQ_MASK);
+//
+//	sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_FAILED);
+}
 
+void broadcastBslData(void)
+{
 	int32_t numberOfTransmittedBytes;
 	uint32_t delayTimeBeforeSendResponeToPC;
 
@@ -322,75 +375,136 @@ void transmitDataToRobot(void)
 	}
 
 	uint32_t i;
-	for (i = 0; i < numberOfTransmittedBytes; i++)
+	usbBufferHostToDevice[0] = numberOfTransmittedBytes;
+	for (i = 1; i < (numberOfTransmittedBytes + 1); i++)
 	{
-		usbBufferHostToDevice[i] = usbBufferHostToDevice[3 + i];
+		usbBufferHostToDevice[i] = usbBufferHostToDevice[2 + i];
 	}
 
-	RF24_TX_writePayloadNoAck(numberOfTransmittedBytes, usbBufferHostToDevice);
-
-	RF24_TX_pulseTransmit();
-
-	g_ui32SysTickCount = 0;
-
-	while (g_ui32SysTickCount < SYSTICKS_PER_SECOND)
+	if(RfSendPacket(usbBufferHostToDevice, numberOfTransmittedBytes + 1))
 	{
-		if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
-		{
-			if (RF24_getIrqFlag(RF24_IRQ_TX))
-			{
-				RF24_clearIrqFlag(RF24_IRQ_TX);
+		g_ui32SysTickCount = 0;
 
-				g_ui32SysTickCount = 0;
+		while (g_ui32SysTickCount < delayTimeBeforeSendResponeToPC);
 
-				while (g_ui32SysTickCount < delayTimeBeforeSendResponeToPC)
-					;
-
-				sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_DONE);
-
-				return;
-			}
-		}
+		sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_DONE);
 	}
-
-	RF24_clearIrqFlag(RF24_IRQ_MASK);
-
-	sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_FAILED);
+	else
+	{
+		sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_FAILED);
+	}
 }
 
 void receiveDataFromRobot(bool haveCommand)
 {
+//	uint32_t dataLength = convertByteToUINT32(&usbBufferHostToDevice[2]);
+//	uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
+//
+//	uint32_t length = 0;
+//
+//	if (haveCommand)
+//	{
+//		// Transfer the command and the data length to robot
+//		RF24_TX_activate();
+//
+//		RF24_TX_writePayloadNoAck(5, &usbBufferHostToDevice[1]);
+//
+//		RF24_TX_pulseTransmit();
+//
+//		g_ui32SysTickCount = 0;
+//
+//		while (g_ui32SysTickCount < SYSTICKS_PER_SECOND)
+//		{
+//			if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
+//			{
+//				if (RF24_getIrqFlag(RF24_IRQ_TX))
+//				{
+//					RF24_clearIrqFlag(RF24_IRQ_TX);
+//					break;
+//				}
+//			}
+//		}
+//	}
+//	RF24_TX_flush();
+//	RF24_RX_activate();
+//	// rfDelayLoop(DELAY_CYCLES_130US);
+//	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
+//
+//	while (1)
+//	{
+//		g_ui32SysTickCount = 0;
+//
+//		while (1)
+//		{
+//			if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
+//			{
+//				GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
+//
+//				if (RF24_getIrqFlag(RF24_IRQ_RX))
+//				{
+//					length = RF24_RX_getPayloadWidth();
+//
+//					RF24_RX_getPayloadData(length, usbBufferDeviceToHost);
+//
+//					RF24_clearIrqFlag(RF24_IRQ_RX);
+//
+//					break;
+//				}
+//			}
+//			// Wait time for receiving data is over?
+//			if (g_ui32SysTickCount == waitTime)
+//			{ // Signal to the PC we failed to read data from robot
+//			  // The error signal is at the index 32 since the data read
+//			  // from robot will be in the range [0:31]
+//				usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
+//				USB_sendData(0);
+//				return;
+//			}
+//		}
+//
+//		// Ready to receive data from PC
+//		g_USBRxState = USB_RX_IDLE;
+//
+//		// Set the error byte to zero
+//		usbBufferDeviceToHost[32] = 0;
+//
+//		// Send the received data to PC
+//		USB_sendData(0);
+//
+//		// Did we receive all the requested data?
+//		if (dataLength > length)
+//		{
+//			// No -> re-calculate the number of data need to be received
+//			dataLength -= length;
+//		}
+//		else
+//		{
+//			// Yes -> the transmission finished successfully
+//			break;
+//		}
+//
+//		// Wait for the PC to be ready to receive the next data
+//		while (g_USBRxState != USB_RX_DATA_AVAILABLE)
+//			;
+//
+//		// Did we receive the right signal?
+//		if (usbBufferHostToDevice[0] != RECEIVE_DATA_FROM_ROBOT_CONTINUE)
+//		{
+//			signalUnhandleError();
+//		}
+//	}
+
 	uint32_t dataLength = convertByteToUINT32(&usbBufferHostToDevice[2]);
 	uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
-
+	uint8_t i;
 	uint32_t length = 0;
 
 	if (haveCommand)
 	{
 		// Transfer the command and the data length to robot
-		RF24_TX_activate();
-
-		RF24_TX_writePayloadNoAck(5, &usbBufferHostToDevice[1]);
-
-		RF24_TX_pulseTransmit();
-
-		g_ui32SysTickCount = 0;
-
-		while (g_ui32SysTickCount < SYSTICKS_PER_SECOND)
-		{
-			if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
-			{
-				if (RF24_getIrqFlag(RF24_IRQ_TX))
-				{
-					RF24_clearIrqFlag(RF24_IRQ_TX);
-					break;
-				}
-			}
-		}
+		usbBufferHostToDevice[0] = 5;
+		RfSendPacket(usbBufferHostToDevice, usbBufferHostToDevice[0] + 1); // <command><request size>
 	}
-	RF24_TX_flush();
-	RF24_RX_activate();
-	// rfDelayLoop(DELAY_CYCLES_130US);
 	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
 
 	while (1)
@@ -399,18 +513,97 @@ void receiveDataFromRobot(bool haveCommand)
 
 		while (1)
 		{
-			if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
+			if (TI_CC_IsInterruptPinAsserted())
 			{
+				TI_CC_ClearIntFlag();
+
 				GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
 
-				if (RF24_getIrqFlag(RF24_IRQ_RX))
+				if (RfReceivePacket(usbBufferDeviceToHost) == RX_STATUS_SUCCESS)   // Fetch packet from CCxxxx
 				{
-					length = RF24_RX_getPayloadWidth();
+					length = usbBufferDeviceToHost[0];
+					for(i = 0; i < length; i++)
+					{
+						usbBufferDeviceToHost[i] = usbBufferDeviceToHost[i + 1];
+					}
+					break;
+				}
+			}
+			// Wait time for receiving data is over?
+			if (g_ui32SysTickCount == waitTime)
+			{ // Signal to the PC we failed to read data from robot
+			  // The error signal is at the index 32 since the data read
+			  // from robot will be in the range [0:31]
+				usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
+				USB_sendData(0);
+				return;
+			}
+		}
 
-					RF24_RX_getPayloadData(length, usbBufferDeviceToHost);
+		// Ready to receive data from PC
+		g_USBRxState = USB_RX_IDLE;
 
-					RF24_clearIrqFlag(RF24_IRQ_RX);
+		// Set the error byte to zero
+		usbBufferDeviceToHost[32] = 0;
 
+		// Send the received data to PC
+		USB_sendData(0);
+
+		// Did we receive all the requested data?
+		if (dataLength > length)
+		{
+			// No -> re-calculate the number of data need to be received
+			dataLength -= length;
+		}
+		else
+		{
+			// Yes -> the transmission finished successfully
+			break;
+		}
+
+		// Wait for the PC to be ready to receive the next data
+		while (g_USBRxState != USB_RX_DATA_AVAILABLE)
+			;
+
+		// Did we receive the right signal?
+		if (usbBufferHostToDevice[0] != RECEIVE_DATA_FROM_ROBOT_CONTINUE)
+		{
+			signalUnhandleError();
+		}
+	}
+}
+
+void captureBslData(void)
+{
+	uint32_t dataLength = convertByteToUINT32(&usbBufferHostToDevice[2]);
+	uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
+
+	uint32_t length = 0;
+	uint8_t i;
+
+	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
+
+	while (1)
+	{
+		g_ui32SysTickCount = 0;
+
+		while (1)
+		{
+			if (TI_CC_IsInterruptPinAsserted())
+			{
+				TI_CC_ClearIntFlag();
+
+				GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
+
+				//TODO: Only detect JAMMING is needed
+
+				if (RfReceivePacket(usbBufferDeviceToHost) == RX_STATUS_SUCCESS)  // Fetch packet from CCxxxx
+				{
+					length = usbBufferDeviceToHost[0];
+					for(i = 0; i < length; i++)
+					{
+						usbBufferDeviceToHost[i] = usbBufferDeviceToHost[i + 1];
+					}
 					break;
 				}
 			}
@@ -460,30 +653,30 @@ void receiveDataFromRobot(bool haveCommand)
 
 bool readDataFromRobot(uint32_t * length, uint8_t * readData, uint32_t waitTime)
 {
-	RF24_RX_activate();
-	rfDelayLoop(DELAY_CYCLES_130US);
-
-	g_ui32SysTickCount = 0;
-	while (1)
-	{
-		if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
-		{
-			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
-
-			if (RF24_getIrqFlag(RF24_IRQ_RX))
-				break;
-		}
-		// Wait time for receiving data is over?
-		if (g_ui32SysTickCount == waitTime)
-			return 0;
-	}
-
-	*length = RF24_RX_getPayloadWidth();
-	RF24_RX_getPayloadData(*length, readData);
-
-	// Only clear the IRQ if the RF FIFO is empty
-	if (RF24_RX_isEmpty())
-		RF24_clearIrqFlag(RF24_IRQ_RX);
+//	RF24_RX_activate();
+//	rfDelayLoop(DELAY_CYCLES_130US);
+//
+//	g_ui32SysTickCount = 0;
+//	while (1)
+//	{
+//		if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
+//		{
+//			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
+//
+//			if (RF24_getIrqFlag(RF24_IRQ_RX))
+//				break;
+//		}
+//		// Wait time for receiving data is over?
+//		if (g_ui32SysTickCount == waitTime)
+//			return 0;
+//	}
+//
+//	*length = RF24_RX_getPayloadWidth();
+//	RF24_RX_getPayloadData(*length, readData);
+//
+//	// Only clear the IRQ if the RF FIFO is empty
+//	if (RF24_RX_isEmpty())
+//		RF24_clearIrqFlag(RF24_IRQ_RX);
 
 	return 1;
 }
@@ -698,13 +891,13 @@ void signalUnhandleError(void)
 	while (1)
 	{
 		GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
-		SysCtlDelay(2000000);
+		SysCtlDelay(200000);
 
 		GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_GREEN);
-		SysCtlDelay(2000000);
+		SysCtlDelay(200000);
 
 		GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
-		SysCtlDelay(2000000);
+		SysCtlDelay(200000);
 	}
 }
 
