@@ -8,8 +8,12 @@ extern uint8_t usbBufferHostToDevice[];
 extern uint8_t usbBufferDeviceToHost[];
 extern char g_BluetoothBuffer[];
 extern uint8_t g_ui8BluetoothCounter;
+extern eProtocol g_eCurrentProtocol;
 uint32_t
 convertByteToUINT32(uint8_t data[]);
+
+void TI_CC_IRQ_handler(void);
+void TI_CC_IRQ_handler(void){}
 
 void main(void)
 {
@@ -30,6 +34,17 @@ void main(void)
 			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
 			switch (usbBufferHostToDevice[0])
 			{
+			case CONFIGURE_BOOTLOAD_PROTOCOL:
+				g_eCurrentProtocol = PROTOCOL_BOOTLOAD;
+				sendResponeToHost(CONFIGURE_BOOTLOAD_PROTOCOL_OK);
+				break;
+
+			case CONFIGURE_NORMAL_PROTOCOL:
+				g_eCurrentProtocol = PROTOCOL_NORMAL;
+				sendResponeToHost(CONFIGURE_NORMAL_PROTOCOL_OK);
+				break;
+
+			//---------------------- out of date S ----------------------
 			case CONFIGURE_SPI:
 				configureSPI();
 				break;
@@ -39,16 +54,36 @@ void main(void)
 				break;
 
 			case TRANSMIT_DATA_TO_ROBOT:
-				transmitDataToRobot();
+				switch (g_eCurrentProtocol)
+				{
+				case PROTOCOL_BOOTLOAD:
+					broadcastBslData();
+					break;
+
+				default:	// PROTOCOL_NORMAL
+					transmitDataToRobot();
+					break;
+				}
 				break;
 
 			case RECEIVE_DATA_FROM_ROBOT:
-				receiveDataFromRobot(false);
+				switch (g_eCurrentProtocol)
+				{
+				case PROTOCOL_BOOTLOAD:
+					captureBslData();
+					break;
+
+				default:	// PROTOCOL_NORMAL
+					receiveDataFromRobot(false);
+					break;
+				}
 				break;
 
 			case RECEIVE_DATA_FROM_ROBOT_COMMAND:
+				// PROTOCOL_NORMAL
 				receiveDataFromRobot(true);
 				break;
+			//---------------------- out of date E ----------------------
 
 			default:
 				signalUnhandleError();
@@ -102,11 +137,11 @@ void BluetoothIntHandler(void)
 
 	if (g_ui8BluetoothCounter > 2
 			&& g_BluetoothBuffer[g_ui8BluetoothCounter - 2] == 0x0D
-			&& g_BluetoothBuffer[g_ui8BluetoothCounter - 1] == 0x0A)
+			&& g_BluetoothBuffer[g_ui8BluetoothCounter - 1] == 0x0A) // Is detected /r/n endlinechar?
 	{
 		if (g_BluetoothBuffer[0] == SMART_PHONE_REQUEST_CONFIG)
 		{
-			RF24_TX_setAddress((unsigned char *)&g_BluetoothBuffer[1]);
+			// RF24_TX_setAddress((unsigned char *)&g_BluetoothBuffer[1]);
 
 			UARTCharPut(UART2_BASE, 'O');
 			UARTCharPut(UART2_BASE, 'K');
@@ -120,16 +155,16 @@ void BluetoothIntHandler(void)
 		{
 			g_ui8BluetoothCounter -= 2;
 			// send to RF
-			RF24_TX_activate();
-			RF24_TX_writePayloadNoAck((unsigned char)(g_ui8BluetoothCounter), (unsigned char*)g_BluetoothBuffer);
-			RF24_TX_pulseTransmit();
-
-			while (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) != 0)
-				;
-
-			RF24_clearIrqFlag(RF24_IRQ_MASK);
-
-			RF24_RX_activate();
+//			RF24_TX_activate();
+//			RF24_TX_writePayloadNoAck((unsigned char)(g_ui8BluetoothCounter), (unsigned char*)g_BluetoothBuffer);
+//			RF24_TX_pulseTransmit();
+//
+//			while (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) != 0)
+//				;
+//
+//			RF24_clearIrqFlag(RF24_IRQ_MASK);
+//
+//			RF24_RX_activate();
 		}
 
 		GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_ALL); //blink LED

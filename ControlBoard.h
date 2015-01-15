@@ -38,11 +38,20 @@
 
 #include "usb_swarm_control_structs.h"
 
-#include "libnrf24l01/inc/nRF24L01.h"
-#include "libnrf24l01/inc/TM4C123_nRF24L01.h"
+//#include "libnrf24l01/inc/nRF24L01.h"
+//#include "libnrf24l01/inc/TM4C123_nRF24L01.h"
+
+#include "libcc2500/inc/TM4C123_CC2500.h"
+#include "libcc2500/inc/cc2500.h"
 
 extern uint32_t
 convertByteToUINT32(uint8_t data[]);
+
+typedef enum
+{
+	PROTOCOL_NORMAL,
+	PROTOCOL_BOOTLOAD
+} eProtocol;
 
 #define SMART_PHONE_REQUEST_CONFIG	0xAA // 0xF0 is reserved
 
@@ -87,12 +96,16 @@ convertByteToUINT32(uint8_t data[]);
 #define RECEIVE_DATA_FROM_ROBOT_COMMAND 0x12
 #define CONFIGURE_RF				0x13
 #define CONFIGURE_SPI				0x14
+#define CONFIGURE_BOOTLOAD_PROTOCOL	0x15
+#define CONFIGURE_NORMAL_PROTOCOL	0x16
 
 //*****************************************************************************
 // Response to Host USB
 //*****************************************************************************
 #define CONFIGURE_RF_OK                   	0x12
 #define CONFIGURE_SPI_OK                  	0x13
+#define CONFIGURE_BOOTLOAD_PROTOCOL_OK		0x14
+#define CONFIGURE_NORMAL_PROTOCOL_OK		0x15
 #define TRANSMIT_DATA_TO_ROBOT_DONE 	  	0xAA
 #define TRANSMIT_DATA_TO_ROBOT_FAILED   	0xFA
 #define RECEIVE_DATA_FROM_ROBOT_ERROR     	0xEE
@@ -106,8 +119,7 @@ convertByteToUINT32(uint8_t data[]);
 #define BLUETOOTH_BUFFER_SIZE 34 // RF data + 2 end char (\r\n) 0x0D 0x0A
 inline void
 initSystem(void);
-inline void
-initRfModule(void);
+//inline void initRfModule(void);
 inline void
 initUSB(void);
 inline void
@@ -135,6 +147,7 @@ configureRF(void);
 //*****************************************************************************
 void
 transmitDataToRobot(void);
+void broadcastBslData(void);
 
 //*****************************************************************************
 // !COMMAND from the host
@@ -146,6 +159,7 @@ transmitDataToRobot(void);
 //*****************************************************************************
 void
 receiveDataFromRobot(bool haveCommand);
+void captureBslData(void);
 
 //*****************************************************************************
 // Read data receive from the robot.
