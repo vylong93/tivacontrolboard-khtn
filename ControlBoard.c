@@ -573,80 +573,45 @@ void receiveDataFromRobot(bool haveCommand)
 	}
 }
 
-void captureBslData(void)
+void scanJammingSignal(void)
 {
-	uint32_t dataLength = convertByteToUINT32(&usbBufferHostToDevice[2]);
 	uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
-
-	uint32_t length = 0;
-	uint8_t i;
 
 	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
 
+	g_ui32SysTickCount = 0;
+
+	// Waiting to see any JAMMING signal from the robots
 	while (1)
 	{
-		g_ui32SysTickCount = 0;
+		//TODO: Reconfig GPO2 and use CCA detect
 
-		while (1)
+		// Is JAMMING detected?
+		if (TI_CC_IsInterruptPinAsserted())
 		{
-			if (TI_CC_IsInterruptPinAsserted())
-			{
-				TI_CC_ClearIntFlag();
+			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
+			TI_CC_ClearIntFlag();
+			RfFlushRxFifo();
 
-				GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
+			// Ready to receive data from PC
+			g_USBRxState = USB_RX_IDLE;
 
-				//TODO: Only detect JAMMING is needed
+			// Set the error byte to zero - indicate Rx asserted!!!
+			usbBufferDeviceToHost[32] = 0;
 
-				if (RfReceivePacket(usbBufferDeviceToHost) == RX_STATUS_SUCCESS)  // Fetch packet from CCxxxx
-				{
-					length = usbBufferDeviceToHost[0];
-					for(i = 0; i < length; i++)
-					{
-						usbBufferDeviceToHost[i] = usbBufferDeviceToHost[i + 1];
-					}
-					break;
-				}
-			}
-			// Wait time for receiving data is over?
-			if (g_ui32SysTickCount == waitTime)
-			{ // Signal to the PC we failed to read data from robot
-			  // The error signal is at the index 32 since the data read
-			  // from robot will be in the range [0:31]
-				usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
-				USB_sendData(0);
-				return;
-			}
+			// Send the received data to PC
+			USB_sendData(0);
+			return;
 		}
 
-		// Ready to receive data from PC
-		g_USBRxState = USB_RX_IDLE;
-
-		// Set the error byte to zero
-		usbBufferDeviceToHost[32] = 0;
-
-		// Send the received data to PC
-		USB_sendData(0);
-
-		// Did we receive all the requested data?
-		if (dataLength > length)
-		{
-			// No -> re-calculate the number of data need to be received
-			dataLength -= length;
-		}
-		else
-		{
-			// Yes -> the transmission finished successfully
-			break;
-		}
-
-		// Wait for the PC to be ready to receive the next data
-		while (g_USBRxState != USB_RX_DATA_AVAILABLE)
-			;
-
-		// Did we receive the right signal?
-		if (usbBufferHostToDevice[0] != RECEIVE_DATA_FROM_ROBOT_CONTINUE)
-		{
-			signalUnhandleError();
+		// Wait time for receiving data is over?
+		if (g_ui32SysTickCount == waitTime)
+		{ // Signal to the PC we failed to read data from robot
+		  // The error signal is at the index 32 since the data read
+		  // from robot will be in the range [0:31]
+			usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
+			USB_sendData(0);
+			return;
 		}
 	}
 }
