@@ -114,7 +114,7 @@ typedef enum
 //*****************************************************************************
 // RF transmit maximum packet length
 //*****************************************************************************
-#define MAX_ALLOWED_DATA_LENGTH 32
+#define MAX_ALLOWED_DATA_LENGTH 64
 
 #define BLUETOOTH_BUFFER_SIZE 34 // RF data + 2 end char (\r\n) 0x0D 0x0A
 inline void
@@ -159,7 +159,7 @@ void broadcastBslData(void);
 //*****************************************************************************
 void
 receiveDataFromRobot(bool haveCommand);
-void captureBslData(void);
+void scanJammingSignal(void);
 
 //*****************************************************************************
 // Read data receive from the robot.

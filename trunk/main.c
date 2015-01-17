@@ -70,7 +70,7 @@ void main(void)
 				switch (g_eCurrentProtocol)
 				{
 				case PROTOCOL_BOOTLOAD:
-					captureBslData();
+					scanJammingSignal();
 					break;
 
 				default:	// PROTOCOL_NORMAL
