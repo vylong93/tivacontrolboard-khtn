@@ -18,7 +18,7 @@ void * pvDevice;
 //*****************************************************************************
 // Global system tick counter holds elapsed time since the application started
 //*****************************************************************************
-volatile uint32_t g_ui32SysTickCount;
+extern uint32_t g_ui32SysTickCount;
 
 //*****************************************************************************
 // These variables hold the device configuration information
@@ -573,47 +573,53 @@ void receiveDataFromRobot(bool haveCommand)
 	}
 }
 
+extern uint32_t g_ui32JAMCount;
 void scanJammingSignal(void)
 {
 	uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
 
 	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
 
-	g_ui32SysTickCount = 0;
+	// Signal to the PC we failed to read data from robot
+	// The error signal is at the index 32 since the data read
+	// from robot will be in the range [0:31]
+	usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
 
+	TI_CC_Strobe(TI_CCxxx0_SRX);      // Initialize CCxxxx in RX mode.
+
+	g_ui32SysTickCount = 0;
 	// Waiting to see any JAMMING signal from the robots
 	while (1)
 	{
 		//TODO: Reconfig GPO2 and use CCA detect
-
-		// Is JAMMING detected?
-		if (TI_CC_IsInterruptPinAsserted())
+		if (TI_CC_IsInterruptPinAsserted())			// Is JAMMING detected?
 		{
-			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
 			TI_CC_ClearIntFlag();
+
+			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
+
 			RfFlushRxFifo();
 
-			// Ready to receive data from PC
-			g_USBRxState = USB_RX_IDLE;
+			TI_CC_Strobe(TI_CCxxx0_SRX);      // Initialize CCxxxx in RX mode.
 
 			// Set the error byte to zero - indicate Rx asserted!!!
 			usbBufferDeviceToHost[32] = 0;
 
-			// Send the received data to PC
-			USB_sendData(0);
-			return;
+			g_ui32JAMCount++;
+
+			break; // Jamming break in half
 		}
 
-		// Wait time for receiving data is over?
-		if (g_ui32SysTickCount == waitTime)
-		{ // Signal to the PC we failed to read data from robot
-		  // The error signal is at the index 32 since the data read
-		  // from robot will be in the range [0:31]
-			usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
-			USB_sendData(0);
-			return;
-		}
+		if(g_ui32SysTickCount >= waitTime)
+				break; // Success break
 	}
+
+	// Ready to receive data from PC
+	g_USBRxState = USB_RX_IDLE;
+
+	// Send the received data to PC
+	USB_sendData(0);
+	return;
 }
 
 bool readDataFromRobot(uint32_t * length, uint8_t * readData, uint32_t waitTime)
@@ -864,11 +870,6 @@ void signalUnhandleError(void)
 		GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
 		SysCtlDelay(200000);
 	}
-}
-
-void SysTickHandler(void)
-{
-	g_ui32SysTickCount++;
 }
 
 #endif /* CONTROLBOARD_C_ */
