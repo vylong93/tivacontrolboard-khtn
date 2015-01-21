@@ -585,8 +585,6 @@ void scanJammingSignal(void)
 	// from robot will be in the range [0:31]
 	usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
 
-	TI_CC_Strobe(TI_CCxxx0_SRX);      // Initialize CCxxxx in RX mode.
-
 	g_ui32SysTickCount = 0;
 	// Waiting to see any JAMMING signal from the robots
 	while (1)
