@@ -23,15 +23,15 @@ void main(void)
 
 	initLaunchpadSW1();
 
-	initBluetooth();
-
-	initUSB();
-
 	initRfModule(false);
+
+	initBluetooth();
 
 	initDelayTimers();
 
-	initBluetooth();
+	Network_setSelfAddress(RF_CONTOLBOARD_ADDR);
+
+	initUSB();
 
 	while (1)
 	{
@@ -56,11 +56,6 @@ void main(void)
 			case CONFIGURE_NORMAL_PROTOCOL:
 				g_eCurrentProtocol = PROTOCOL_NORMAL;
 				sendResponeToHost(CONFIGURE_NORMAL_PROTOCOL_OK);
-				break;
-
-			//---------------------- out of date S ----------------------
-			case CONFIGURE_SPI:
-				configureSPI();
 				break;
 
 			case CONFIGURE_RF:
@@ -97,32 +92,33 @@ void main(void)
 				// PROTOCOL_NORMAL
 				receiveDataFromRobot(true);
 				break;
-			//---------------------- out of date E ----------------------
 
 			default:
 				signalUnhandleError();
 				break;
 			}
+
 			g_USBRxState = USB_RX_IDLE;
-			GPIOPinWrite(LED_PORT_BASE, LED_BLUE, 0);
+
+			turnOffLED(LED_BLUE);
 		}
 	}
 }
 
 void BluetoothCommandDecoder(uint8_t* pui8Cmd, uint8_t ui8Length)
 {
-	if (pui8Cmd[0] == SMART_PHONE_REQUEST_CONFIG)
-	{
-		// RF24_TX_setAddress((unsigned char *)&g_BluetoothBuffer[1]);
-
-		UARTCharPut(UART2_BASE, 'O');
-		UARTCharPut(UART2_BASE, 'K');
-		UARTCharPut(UART2_BASE, ' ');
-		UARTCharPut(UART2_BASE, (pui8Cmd[1] >> 4) + '0');
-		UARTCharPut(UART2_BASE, (pui8Cmd[1] & 0xF) + '0');
-		UARTCharPut(UART2_BASE, '\r');
-		UARTCharPut(UART2_BASE, '\n');
-	}
+//	if (pui8Cmd[0] == SMART_PHONE_REQUEST_CONFIG)
+//	{
+//		// RF24_TX_setAddress((unsigned char *)&g_BluetoothBuffer[1]);
+//
+//		UARTCharPut(UART2_BASE, 'O');
+//		UARTCharPut(UART2_BASE, 'K');
+//		UARTCharPut(UART2_BASE, ' ');
+//		UARTCharPut(UART2_BASE, (pui8Cmd[1] >> 4) + '0');
+//		UARTCharPut(UART2_BASE, (pui8Cmd[1] & 0xF) + '0');
+//		UARTCharPut(UART2_BASE, '\r');
+//		UARTCharPut(UART2_BASE, '\n');
+//	}
 }
 
 void Sw1IrqHandler(void)

@@ -18,6 +18,7 @@ extern "C"
 #include <stdarg.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_timer.h"
+#include "driverlib/rom.h"
 #include "driverlib/timer.h"
 #include "driverlib/sysctl.h"
 

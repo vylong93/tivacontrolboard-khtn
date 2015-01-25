@@ -75,7 +75,7 @@ void BluetoothIntHandler(void)
 			&& g_BluetoothBuffer[g_ui8BluetoothCounter - 2] == 0x0D
 			&& g_BluetoothBuffer[g_ui8BluetoothCounter - 1] == 0x0A) // Is detected /r/n endlinechar?
 	{
-
+		// Call decoder
 		BluetoothCommandDecoder(g_BluetoothBuffer, g_ui8BluetoothCounter);
 
 		// Clear endline char

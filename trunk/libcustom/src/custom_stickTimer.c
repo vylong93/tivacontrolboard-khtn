@@ -12,7 +12,7 @@ uint32_t g_ui32SysTickCount = 0;
 void initSysTick(void)
 {
 	// Set the system tick to fire 1000 times per second.
-	ROM_SysTickPeriodSet(SysCtlClockGet() / SYSTICKS_PER_SECOND);
+	ROM_SysTickPeriodSet(ROM_SysCtlClockGet() / SYSTICKS_PER_SECOND);
 	SysTickIntRegister(SysTickHandler);
 	ROM_SysTickIntEnable();
 	ROM_SysTickEnable();
