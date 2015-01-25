@@ -730,4 +730,9 @@ void Network_sendACK(Header RxHeader)
 	RfSendPacket((uint8_t*)(&AckHeader), ACK_PACKET_LENGTH);
 }
 
+void Network_deleteBuffer(uint8_t *pui8Buff)
+{
+	delete[] pui8Buff;
+}
+
 #endif /* NETWORK_CPP_ */
