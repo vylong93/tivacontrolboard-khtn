@@ -49,7 +49,7 @@ uint8_t g_ui8BluetoothCounter = 0;
 
 eProtocol g_eCurrentProtocol = PROTOCOL_NORMAL;
 
-inline void initSystem(void)
+void initSystem(void)
 {
 	// Set the clocking to run from the PLL at 50MHz.
 	SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
@@ -88,10 +88,12 @@ inline void initSystem(void)
 
 	initRfModule(false);
 
+	initDelayTimers();
+
 //	RF24_TX_activate();
 }
 
-inline void initBluetooth(void)
+void initBluetooth(void)
 {
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_UART2);
 
@@ -198,7 +200,7 @@ inline void initBluetooth(void)
 ////		g_ui32AddressPipe[5] = (g_ui32AddressPipe[1] & 0xFFFF00) | RF24_readRegister(RF24_REG_RX_ADDR_P5);
 //}
 
-inline void initUSB(void)
+void initUSB(void)
 {
 	// Configure the required pins for USB operation
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
@@ -397,178 +399,104 @@ void broadcastBslData(void)
 
 void receiveDataFromRobot(bool haveCommand)
 {
-//	uint32_t dataLength = convertByteToUINT32(&usbBufferHostToDevice[2]);
-//	uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
-//
-//	uint32_t length = 0;
-//
-//	if (haveCommand)
-//	{
-//		// Transfer the command and the data length to robot
-//		RF24_TX_activate();
-//
-//		RF24_TX_writePayloadNoAck(5, &usbBufferHostToDevice[1]);
-//
-//		RF24_TX_pulseTransmit();
-//
-//		g_ui32SysTickCount = 0;
-//
-//		while (g_ui32SysTickCount < SYSTICKS_PER_SECOND)
-//		{
-//			if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
-//			{
-//				if (RF24_getIrqFlag(RF24_IRQ_TX))
-//				{
-//					RF24_clearIrqFlag(RF24_IRQ_TX);
-//					break;
-//				}
-//			}
-//		}
-//	}
-//	RF24_TX_flush();
-//	RF24_RX_activate();
-//	// rfDelayLoop(DELAY_CYCLES_130US);
-//	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
-//
-//	while (1)
-//	{
-//		g_ui32SysTickCount = 0;
-//
-//		while (1)
-//		{
-//			if (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) == 0)
-//			{
-//				GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
-//
-//				if (RF24_getIrqFlag(RF24_IRQ_RX))
-//				{
-//					length = RF24_RX_getPayloadWidth();
-//
-//					RF24_RX_getPayloadData(length, usbBufferDeviceToHost);
-//
-//					RF24_clearIrqFlag(RF24_IRQ_RX);
-//
-//					break;
-//				}
-//			}
-//			// Wait time for receiving data is over?
-//			if (g_ui32SysTickCount == waitTime)
-//			{ // Signal to the PC we failed to read data from robot
-//			  // The error signal is at the index 32 since the data read
-//			  // from robot will be in the range [0:31]
-//				usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
-//				USB_sendData(0);
-//				return;
-//			}
-//		}
-//
-//		// Ready to receive data from PC
-//		g_USBRxState = USB_RX_IDLE;
-//
-//		// Set the error byte to zero
-//		usbBufferDeviceToHost[32] = 0;
-//
-//		// Send the received data to PC
-//		USB_sendData(0);
-//
-//		// Did we receive all the requested data?
-//		if (dataLength > length)
-//		{
-//			// No -> re-calculate the number of data need to be received
-//			dataLength -= length;
-//		}
-//		else
-//		{
-//			// Yes -> the transmission finished successfully
-//			break;
-//		}
-//
-//		// Wait for the PC to be ready to receive the next data
-//		while (g_USBRxState != USB_RX_DATA_AVAILABLE)
-//			;
-//
-//		// Did we receive the right signal?
-//		if (usbBufferHostToDevice[0] != RECEIVE_DATA_FROM_ROBOT_CONTINUE)
-//		{
-//			signalUnhandleError();
-//		}
-//	}
-
 	uint32_t dataLength = convertByteToUINT32(&usbBufferHostToDevice[2]);
 	uint32_t waitTime = convertByteToUINT32(&usbBufferHostToDevice[6]);
+
 	uint8_t i;
-	uint32_t length = 0;
+	uint32_t ui32MessageSize;
+	uint8_t* pui8RxBuffer = 0;
+	uint32_t ui32DataPointer;
 
 	if (haveCommand)
 	{
-		// Transfer the command and the data length to robot
-		usbBufferHostToDevice[0] = 5;
-		RfSendPacket(usbBufferHostToDevice, usbBufferHostToDevice[0] + 1); // <command><request size>
-	}
-	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
+		//TODO: set destination address function, replace 0x12345678 by g_ui32DestinationID
 
-	while (1)
-	{
-		g_ui32SysTickCount = 0;
-
-		while (1)
+		// Transfer the command and the data length to robot, require ack
+		if(!Network_sendMessage(0x12345678, &usbBufferHostToDevice[1], 5, true)) // <command><request size>
 		{
-			if (TI_CC_IsInterruptPinAsserted())
+			usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
+			USB_sendData(0);
+			return;
+		}
+	}
+
+	turnOnLED(LED_BLUE);
+
+	g_ui32SysTickCount = 0;
+
+	while (true)
+	{
+		if (TI_CC_IsInterruptPinAsserted())
+		{
+			TI_CC_ClearIntFlag();
+
+			if (Network_receivedMessage(&pui8RxBuffer, &ui32MessageSize))
 			{
-				TI_CC_ClearIntFlag();
+				turnOffLED(LED_BLUE);
 
-				GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
-
-				if (RfReceivePacket(usbBufferDeviceToHost) == RX_STATUS_SUCCESS)   // Fetch packet from CCxxxx
+				if (dataLength == ui32MessageSize)
 				{
-					length = usbBufferDeviceToHost[0];
-					for(i = 0; i < length; i++)
+					// send received message to PC via USB
+					ui32DataPointer = 0;
+
+					while(ui32DataPointer < ui32MessageSize)
 					{
-						usbBufferDeviceToHost[i] = usbBufferDeviceToHost[i + 1];
+						for(i = 0; i < 32 && ui32DataPointer < ui32MessageSize; i++)
+						{
+							usbBufferDeviceToHost[i] =  pui8RxBuffer[ui32DataPointer++];
+						}
+
+						// Ready to receive data from PC
+						g_USBRxState = USB_RX_IDLE;
+
+						// Set the error byte to zero
+						usbBufferDeviceToHost[32] = 0;
+
+						// Send the received data to PC
+						USB_sendData(0);
+
+						// Is all data transmitted
+						if(ui32DataPointer >= ui32MessageSize)
+							break;
+
+						// Wait for the PC to be ready to receive the next data
+						while (g_USBRxState != USB_RX_DATA_AVAILABLE);
+
+						// Did we receive the right signal?
+						if (usbBufferHostToDevice[0] != RECEIVE_DATA_FROM_ROBOT_CONTINUE)
+						{
+							signalUnhandleError();
+							return;
+						}
 					}
-					break;
+//					//
+//					// Clean up dynamic memory maybe allocated
+//					//
+					if (pui8RxBuffer != 0) {
+						free(pui8RxBuffer);
+						pui8RxBuffer = 0;
+					}
+					return;
 				}
 			}
-			// Wait time for receiving data is over?
-			if (g_ui32SysTickCount == waitTime)
-			{ // Signal to the PC we failed to read data from robot
-			  // The error signal is at the index 32 since the data read
-			  // from robot will be in the range [0:31]
-				usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
-				USB_sendData(0);
-				return;
-			}
+
+//			//
+//			// Clean up dynamic memory maybe allocated
+//			//
+//			if (pui8RxBuffer != 0) {
+//				delete[] pui8RxBuffer;
+//				pui8RxBuffer = 0;
+//			}
 		}
 
-		// Ready to receive data from PC
-		g_USBRxState = USB_RX_IDLE;
-
-		// Set the error byte to zero
-		usbBufferDeviceToHost[32] = 0;
-
-		// Send the received data to PC
-		USB_sendData(0);
-
-		// Did we receive all the requested data?
-		if (dataLength > length)
-		{
-			// No -> re-calculate the number of data need to be received
-			dataLength -= length;
-		}
-		else
-		{
-			// Yes -> the transmission finished successfully
-			break;
-		}
-
-		// Wait for the PC to be ready to receive the next data
-		while (g_USBRxState != USB_RX_DATA_AVAILABLE)
-			;
-
-		// Did we receive the right signal?
-		if (usbBufferHostToDevice[0] != RECEIVE_DATA_FROM_ROBOT_CONTINUE)
-		{
-			signalUnhandleError();
+		// Wait time for receiving data is over?
+		if (g_ui32SysTickCount == waitTime)
+		{ // Signal to the PC we failed to read data from robot
+		  // The error signal is at the index 32 since the data read
+		  // from robot will be in the range [0:31]
+			usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
+			USB_sendData(0);
+			return;
 		}
 	}
 }

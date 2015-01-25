@@ -15,6 +15,7 @@
 #include "libcustom/inc/custom_led.h"
 #include "libcustom/inc/custom_button.h"
 #include "libcustom/inc/custom_stickTimer.h"
+#include "libcustom/inc/custom_delay.h"
 #include "libcustom/inc/custom_uart_debug.h"
 
 #include "usblib/usblib.h"
@@ -27,6 +28,8 @@
 
 #include "libcc2500/inc/TM4C123_CC2500.h"
 #include "libcc2500/inc/cc2500.h"
+
+#include "libprotocol/inc/network.h"
 
 extern uint32_t
 convertByteToUINT32(uint8_t data[]);
@@ -87,9 +90,9 @@ typedef enum
 
 #define BLUETOOTH_BUFFER_SIZE 34 // RF data + 2 end char (\r\n) 0x0D 0x0A
 
-inline void initSystem(void);
-inline void initUSB(void);
-inline void initBluetooth(void);
+void initSystem(void);
+void initUSB(void);
+void initBluetooth(void);
 
 //*****************************************************************************
 // !COMMAND from the host

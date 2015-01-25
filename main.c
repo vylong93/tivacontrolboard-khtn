@@ -12,9 +12,12 @@ extern eProtocol g_eCurrentProtocol;
 uint32_t
 convertByteToUINT32(uint8_t data[]);
 
-void buttonHandler(void);
 
-void TI_CC_IRQ_handler(void);
+	void buttonHandler(void);
+	void TI_CC_IRQ_handler(void);
+	void BluetoothIntHandler(void);
+
+
 void TI_CC_IRQ_handler(void){}
 
 uint32_t g_ui32JAMCount = 0;
