@@ -17,15 +17,6 @@
 #include "driverlib/pin_map.h"
 #include "driverlib/uart.h"
 
-
-#include "usblib/usblib.h"
-#include "usblib/usbhid.h"
-#include "usblib/device/usbdevice.h"
-#include "usblib/device/usbdhid.h"
-#include "usblib/usblibpriv.h"
-
-#include "usb_swarm_control_structs.h"
-
 #define BLUETOOTH_BUFFER_SIZE 34 // RF data + 2 end char (\r\n) 0x0D 0x0A
 
 //*****************************************************************************
