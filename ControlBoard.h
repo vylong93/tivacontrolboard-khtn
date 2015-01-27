@@ -30,8 +30,11 @@
 // Host USB Commands
 //*****************************************************************************
 #define TRANSMIT_DATA_TO_ROBOT 		0x10
+#define	TRANSMIT_DATA_TO_ROBOT_ACK	0x17
+
 #define RECEIVE_DATA_FROM_ROBOT		0x11
 #define RECEIVE_DATA_FROM_ROBOT_COMMAND 0x12
+
 #define CONFIGURE_RF				0x13
 #define CONFIGURE_SPI				0x14
 #define CONFIGURE_BOOTLOAD_PROTOCOL	0x15

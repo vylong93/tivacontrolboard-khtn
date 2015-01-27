@@ -109,6 +109,7 @@ void broadcastBslData(void)
 		return;
 	}
 
+	// Construct bootload program packet
 	uint32_t i;
 	usbBufferHostToDevice[0] = numberOfTransmittedBytes;
 	for (i = 1; i < (numberOfTransmittedBytes + 1); i++)
@@ -132,10 +133,10 @@ void broadcastBslData(void)
 
 void receiveDataFromRobot(bool haveCommand)
 {
-	uint32_t dataLength = construct4Byte(&usbBufferHostToDevice[2]);
-	uint32_t waitTime = construct4Byte(&usbBufferHostToDevice[6]);
+	uint32_t waitTime = construct4Byte(&usbBufferHostToDevice[1]);
+	uint32_t dataLength = construct4Byte(&usbBufferHostToDevice[7]);
 
-	uint8_t i;
+	uint32_t i;
 	uint32_t ui32MessageSize;
 	uint8_t* pui8RxBuffer = 0;
 	uint32_t ui32DataPointer;
@@ -143,7 +144,7 @@ void receiveDataFromRobot(bool haveCommand)
 	if (haveCommand)
 	{
 		// Transfer the command and the data length to robot, require ack
-		if(!Network_sendMessage(g_ui32TxAddress, &usbBufferHostToDevice[1], 5, true)) // <command><request size>
+		if(!Network_sendMessage(g_ui32TxAddress, &usbBufferHostToDevice[5], 6, true)) // <command><request size>
 		{
 			usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
 			USB_sendData(0);
@@ -155,7 +156,7 @@ void receiveDataFromRobot(bool haveCommand)
 
 	g_ui32SysTickCount = 0;
 
-	while (true)
+	while (g_ui32SysTickCount < waitTime)
 	{
 		if (TI_CC_IsInterruptPinAsserted())
 		{
@@ -174,7 +175,7 @@ void receiveDataFromRobot(bool haveCommand)
 					{
 						for(i = 0; i < 32 && ui32DataPointer < ui32MessageSize; i++)
 						{
-							usbBufferDeviceToHost[i] =  pui8RxBuffer[ui32DataPointer++];
+							usbBufferDeviceToHost[i] = pui8RxBuffer[ui32DataPointer++];
 						}
 
 						// Ready to receive data from PC
@@ -200,6 +201,7 @@ void receiveDataFromRobot(bool haveCommand)
 							return;
 						}
 					}
+
 					//
 					// Clean up dynamic memory maybe allocated
 					//
@@ -218,17 +220,12 @@ void receiveDataFromRobot(bool haveCommand)
 				pui8RxBuffer = 0;
 			}
 		}
-
-		// Wait time for receiving data is over?
-		if (g_ui32SysTickCount == waitTime)
-		{ // Signal to the PC we failed to read data from robot
-		  // The error signal is at the index 32 since the data read
-		  // from robot will be in the range [0:31]
-			usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
-			USB_sendData(0);
-			return;
-		}
 	}
+	// Signal to the PC we failed to read data from robot
+	// The error signal is at the index 32 since the data read
+	// from robot will be in the range [0:31]
+	usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
+	USB_sendData(0);
 }
 
 void scanJammingSignal(void)
@@ -244,7 +241,7 @@ void scanJammingSignal(void)
 
 	g_ui32SysTickCount = 0;
 	// Waiting to see any JAMMING signal from the robots
-	while (1)
+	while (true)
 	{
 		//TODO: Reconfig GPO2 and use CCA detect
 		if (TI_CC_IsInterruptPinAsserted())			// Is JAMMING detected?

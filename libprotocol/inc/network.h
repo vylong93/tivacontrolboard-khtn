@@ -96,12 +96,12 @@ extern "C"
 #define ACK_PACKET_LENGTH			RF_HEADER_LENGTH	// Ack response packet length, this packet not contain data field
 #define MULTIPACKET_TIMEOUT_USEC	10000	// Waiting for Middle/Last packet period in mircosecond
 
-typedef enum tag_NetworkStage
+typedef enum tag_NetworkState
 {
-	STAGE_IDLE,
-	STAGE_WAIT_FOR_DATA,
-	STAGE_DATA_AVAILABLE
-}e_NetworkStage;
+	STATE_IDLE,
+	STATE_WAIT_FOR_DATA,
+	STATE_DATA_AVAILABLE
+}e_NetworkState;
 
 typedef enum tag_HandShake
 {
@@ -148,8 +148,8 @@ typedef struct tag_Header {
 } Header;
 
 
-void Network_changeStage(e_NetworkStage stage);
-e_NetworkStage Network_getStage();
+void Network_changeState(e_NetworkState state);
+e_NetworkState Network_getState();
 
 void Network_setSelfAddress(uint32_t ui32Addr);
 uint32_t Network_getSelfAddress();

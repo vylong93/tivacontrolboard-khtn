@@ -75,6 +75,11 @@ void main(void)
 				}
 				break;
 
+			case TRANSMIT_DATA_TO_ROBOT_ACK:
+				// PROTOCOL_NORMAL
+				//TODO: implement
+				break;
+
 			case RECEIVE_DATA_FROM_ROBOT:
 				switch (g_eCurrentProtocol)
 				{
@@ -89,8 +94,7 @@ void main(void)
 				break;
 
 			case RECEIVE_DATA_FROM_ROBOT_COMMAND:
-				// PROTOCOL_NORMAL
-				receiveDataFromRobot(true);
+				receiveDataFromRobot(true);		// PROTOCOL_NORMAL
 				break;
 
 			default:
