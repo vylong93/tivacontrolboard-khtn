@@ -14,7 +14,7 @@
 
 static uint32_t g_ui32SelfAddress = 0x00BD5A01;		//TODO: load EEPROM value instead of hardcode
 static uint8_t g_ui8LastTxPID = 0;
-static e_NetworkStage g_eCurrentStage = STAGE_IDLE;
+static e_NetworkState g_eCurrentState = STATE_IDLE;
 
 static uint8_t g_ui8LastRxPID = 0;
 static uint16_t g_ui16LastRxChecksum = 0x0000;
@@ -29,39 +29,39 @@ static uint16_t g_ui16LastRxChecksum = 0x0000;
 //{
 //	ui32SelfAddress = 0x00BD5A01;	//TODO: load EEPROM value instead of hardcode
 //	ui8LastUsedPID = 0;				//TODO: generate random PID instead of hardcode
-//	eCurrentStage = Network::STAGE_IDLE;
+//	eCurrentState = Network::STATE_IDLE;
 //}
 
 //-----------------------------------------------------------------------------
-//  void Network::changeStage(Network::e_NetworkStage newStage)
+//  void Network::changeState(Network::e_NetworkState newState)
 //
 //  DESCRIPTION:
-//  This function set current network stage to newStage.
+//  This function set current network state to newState.
 //
 //  ARGUMENTS:
-//      Network::e_NetworkStage newStage
-//          New network protocol stage
+//      Network::e_NetworkState newState
+//          New network protocol state
 //-----------------------------------------------------------------------------
-void Network_changeStage(e_NetworkStage newStage)
+void Network_changeState(e_NetworkState newState)
 {
-	g_eCurrentStage = newStage;
+	g_eCurrentState = newState;
 }
 
 //-----------------------------------------------------------------------------
-//  Network::e_NetworkStage Network::getStage()
+//  Network::e_NetworkState Network::getState()
 //
 //  DESCRIPTION:
-//  This function return current network stage.
+//  This function return current network state.
 //
 //  RETURN VALUE:
-//      Network::e_NetworkStage
-//			STAGE_IDLE				: The protocol is free
-//			STAGE_WAIT_FOR_DATA 	: The protocol is waitting for new packet
-//			STAGE_DATA_AVAILABLE 	: The protocol is fully received a message.
+//      Network::e_NetworkState
+//			STATE_IDLE				: The protocol is free
+//			STATE_WAIT_FOR_DATA 	: The protocol is waitting for new packet
+//			STATE_DATA_AVAILABLE 	: The protocol is fully received a message.
 //-----------------------------------------------------------------------------
-e_NetworkStage Network_getStage()
+e_NetworkState Network_getState()
 {
-	return g_eCurrentStage;
+	return g_eCurrentState;
 }
 
 //-----------------------------------------------------------------------------
@@ -446,6 +446,8 @@ bool Network_isAckPacket(uint8_t* pRxBuff, va_list argp)
 //  This function try to construct a recieved message from transmitter
 //  The first 4 byte in the message buffer must hold the message size.
 //  This is valid message format for the transmission.
+//
+//  WARNING!!! Only use this function in interrupt handler
 //
 //  ARGUMENTS:
 //		uint8_t** ppui8MessBuffer
