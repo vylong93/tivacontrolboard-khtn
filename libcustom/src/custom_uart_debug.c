@@ -44,6 +44,10 @@ void initUartDebug(void)
 	// Initialize the UART0 for console I/O.
 	//
 	UARTStdioConfig(0, UART_DEBUG_BAUDRATE, 16000000);
+
+	SysCtlDelay(SysCtlClockGet() / (3 * 1000)); // delay 1ms
+
+	DEBUG_PRINT("init UART DEBUG: OK\n");
 #endif
 }
 

@@ -27,7 +27,7 @@ void main(void)
 
 	initBluetooth();
 
-	initDelayTimers();
+	initDelay();
 
 	Network_setSelfAddress(RF_CONTOLBOARD_ADDR);
 
