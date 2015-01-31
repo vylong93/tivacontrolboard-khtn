@@ -33,7 +33,7 @@
 #define	TRANSMIT_DATA_TO_ROBOT_ACK	0x17
 
 #define RECEIVE_DATA_FROM_ROBOT		0x11
-#define RECEIVE_DATA_FROM_ROBOT_COMMAND 0x12
+#define RECEIVE_DATA_FROM_ROBOT_COMMAND		0x12
 
 #define CONFIGURE_RF				0x13
 #define CONFIGURE_SPI				0x14
@@ -99,7 +99,7 @@ void broadcastBslData(void);
 // If wrong communication command between the host and this device is received,
 // it will call the signalUnhandleError() function.
 //*****************************************************************************
-void receiveDataFromRobot(bool haveCommand);
+void receiveDataFromRobot(bool isHaveCommand);
 
 //*****************************************************************************
 // !COMMAND from the host
