@@ -94,7 +94,7 @@ void main(void)
 				break;
 
 			case RECEIVE_DATA_FROM_ROBOT_COMMAND:
-				receiveDataFromRobot(true);		// PROTOCOL_NORMAL
+				receiveDataFromRobot(true);
 				break;
 
 			default:

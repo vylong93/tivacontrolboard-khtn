@@ -131,20 +131,22 @@ void broadcastBslData(void)
 	}
 }
 
-void receiveDataFromRobot(bool haveCommand)
+void receiveDataFromRobot(bool isHaveCommand)
 {
-	uint32_t waitTime = construct4Byte(&usbBufferHostToDevice[1]);
-	uint32_t dataLength = construct4Byte(&usbBufferHostToDevice[7]);
+	uint32_t dataLength = construct4Byte(&usbBufferHostToDevice[1]);
+	uint32_t waitTime = construct4Byte(&usbBufferHostToDevice[5]);
 
 	uint32_t i;
 	uint32_t ui32MessageSize;
 	uint8_t* pui8RxBuffer = 0;
 	uint32_t ui32DataPointer;
 
-	if (haveCommand)
+	if (isHaveCommand)
 	{
+		uint8_t comandLength = usbBufferHostToDevice[9];
+
 		// Transfer the command and the data length to robot, require ack
-		if(!Network_sendMessage(g_ui32TxAddress, &usbBufferHostToDevice[5], 6, true)) // <command><request size>
+		if(!Network_sendMessage(g_ui32TxAddress, &usbBufferHostToDevice[10], comandLength, true))
 		{
 			usbBufferDeviceToHost[32] = RECEIVE_DATA_FROM_ROBOT_ERROR;
 			USB_sendData(0);
