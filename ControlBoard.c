@@ -232,7 +232,8 @@ void receiveDataFromRobot(bool isHaveCommand)
 
 void scanJammingSignal(void)
 {
-	uint32_t waitTime = construct4Byte(&usbBufferHostToDevice[6]);
+//	uint32_t dataLength = construct4Byte(&usbBufferHostToDevice[1]);
+	uint32_t waitTime = construct4Byte(&usbBufferHostToDevice[5]);
 
 	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
 
