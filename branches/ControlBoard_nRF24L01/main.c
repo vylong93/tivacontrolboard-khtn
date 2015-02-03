@@ -145,48 +145,49 @@ void BluetoothIntHandler(void)
 
 void LaunchpadButtonIntHandler(void)
 {
-//	// Testing only
-//
-//	RF24_TX_activate();
-//
-//	SysCtlDelay(533333);  // ~100ms debound
-//
-//	unsigned char buff = 0xFC; 					// set Distance measure command
-//	RF24_TX_writePayloadNoAck(1, &buff);
-//	RF24_TX_pulseTransmit();
-//
-//	while (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) != 0)
-//		;
-//
-//	if (RF24_getIrqFlag(RF24_IRQ_TX))
-//	{
-//		GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
-//	}
-//
-//	if (RF24_getIrqFlag(RF24_IRQ_MAX_RETRANS))
-//	{
-//		GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
-//	}
-//
-//	RF24_clearIrqFlag(RF24_IRQ_MASK);
-//
-//	SysCtlDelay(533333);  // ~100ms debound
-//
-//	RF24_RX_activate();
-//
-//	GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
-	GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
+	if((GPIOIntStatus(GPIO_PORTF_BASE, false) & GPIO_INT_PIN_4) == GPIO_INT_PIN_4)
+	{
+		GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
 
-	UARTCharPut(UART2_BASE, 'V');
-	UARTCharPut(UART2_BASE, 'y');
-	UARTCharPut(UART2_BASE, 'L');
-	UARTCharPut(UART2_BASE, 'o');
-	UARTCharPut(UART2_BASE, 'n');
-	UARTCharPut(UART2_BASE, 'g');
-	UARTCharPut(UART2_BASE, '\r');
-	UARTCharPut(UART2_BASE, '\n');
+		RF24_TX_activate();
 
-	GPIOPinWrite(LED_PORT_BASE, LED_RED, LED_RED); //blink LED
-	SysCtlDelay(SysCtlClockGet() / (1000 * 3)); //delay ~1 msec
-	GPIOPinWrite(LED_PORT_BASE, LED_RED, 0); //turn off LED
+		SysCtlDelay(SysCtlClockGet() / (1000 * 3) * 200); //delay ~200 msec
+
+	//	UARTCharPut(UART2_BASE, 'V');
+	//	UARTCharPut(UART2_BASE, 'y');
+	//	UARTCharPut(UART2_BASE, 'L');
+	//	UARTCharPut(UART2_BASE, 'o');
+	//	UARTCharPut(UART2_BASE, 'n');
+	//	UARTCharPut(UART2_BASE, 'g');
+	//	UARTCharPut(UART2_BASE, '\r');
+	//	UARTCharPut(UART2_BASE, '\n');
+
+		uint8_t numberOfTransmittedBytes = 8;
+		uint8_t pui8Buffer[8] = { 0 };
+		uint8_t i;
+		for (i = 0; i < numberOfTransmittedBytes; i++)
+			pui8Buffer[i] = 8 - i;
+
+		RF24_TX_writePayloadNoAck(numberOfTransmittedBytes, pui8Buffer);
+		RF24_TX_pulseTransmit();
+		while (GPIOPinRead(RF24_INT_PORT, RF24_INT_Pin) != 0);
+
+		if (RF24_getIrqFlag(RF24_IRQ_TX))
+		{
+			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
+		}
+
+		if (RF24_getIrqFlag(RF24_IRQ_MAX_RETRANS))
+		{
+			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
+		}
+
+		RF24_clearIrqFlag(RF24_IRQ_MASK);
+
+		GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
+
+		SysCtlDelay(533333);  // ~100ms debound
+
+		RF24_RX_activate();
+	}
 }
