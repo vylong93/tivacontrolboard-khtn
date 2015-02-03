@@ -133,7 +133,8 @@ inline void initRfModule(void)
 	initRf24.RetransmitCount = RF24_RETRANS_COUNT15;
 	initRf24.RetransmitDelay = RF24_RETRANS_DELAY_250u;
 	initRf24.Speed = RF24_SPEED_1MBPS;
-	initRf24.Power = RF24_POWER_0DBM;
+	//initRf24.Power = RF24_POWER_0DBM;
+	initRf24.Power = RF24_POWER_MINUS18DBM;
 	initRf24.Features = RF24_FEATURE_EN_DYNAMIC_PAYLOAD
 			| RF24_FEATURE_EN_NO_ACK_COMMAND;
 	initRf24.InterruptEnable = false;
