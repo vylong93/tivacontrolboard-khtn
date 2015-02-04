@@ -11,7 +11,7 @@ extern eProtocol g_eCurrentProtocol;
 
 void Sw1IrqHandler(void);
 void BluetoothCommandDecoder(uint8_t* pui8Cmd, uint8_t ui8Length);
-void TI_CC_IRQ_handler(void);
+void MCU_RF_IRQ_handler(void);
 
 void main(void)
 {
@@ -130,7 +130,7 @@ void Sw1IrqHandler(void)
 	// Put your testing code here!
 }
 
-void TI_CC_IRQ_handler(void)
+void MCU_RF_IRQ_handler(void)
 {
 	// Make the complier happy, Interrupt is not used
 }

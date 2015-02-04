@@ -37,12 +37,15 @@ void initLaunchpadSW1(void)
 
 void LaunchpadButtonIntHandler(void)
 {
-	GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
+	if((GPIOIntStatus(GPIO_PORTF_BASE, false) & GPIO_INT_PIN_4) == GPIO_INT_PIN_4)
+	{
+		GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
 
-	ROM_GPIOPinWrite(LED_PORT_BASE, LED_RED, LED_RED);  	//blink LED
-	ROM_SysCtlDelay(SysCtlClockGet() / (3 * 1000) * 150);  	//delay ~150 msec
+		ROM_GPIOPinWrite(LED_PORT_BASE, LED_RED, LED_RED);  	//blink LED
+		ROM_SysCtlDelay(SysCtlClockGet() / (3 * 1000) * 150);  	//delay ~150 msec
 
-	Sw1IrqHandler();
+		Sw1IrqHandler();
 
-	ROM_GPIOPinWrite(LED_PORT_BASE, LED_RED, 0);  		//turn off LED
+		ROM_GPIOPinWrite(LED_PORT_BASE, LED_RED, 0);  		//turn off LED
+	}
 }

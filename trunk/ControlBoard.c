@@ -26,6 +26,7 @@ static uint32_t g_ui32TxAddress = RF_DESTINATION_ADDR;
 
 void configureRF(void)
 {
+#ifdef RF_USE_CC2500
 	uint8_t ui8AddrWidth;
 	uint32_t ui32RxAddr;
 
@@ -68,6 +69,12 @@ void configureRF(void)
 	Network_setSelfAddress(ui32RxAddr);
 
 	sendResponeToHost(CONFIGURE_RF_OK);
+#endif
+
+#ifdef RF_USE_nRF24L01
+	//TODO: impelement
+	sendResponeToHost(CONFIGURE_RF_OK);
+#endif
 }
 
 void transmitDataToRobot(void)
@@ -117,7 +124,7 @@ void broadcastBslData(void)
 		usbBufferHostToDevice[i] = usbBufferHostToDevice[2 + i];
 	}
 
-	if(RfSendPacket(usbBufferHostToDevice, numberOfTransmittedBytes + 1))
+	if(RfSendPacket(usbBufferHostToDevice))
 	{
 		g_ui32SysTickCount = 0;
 
@@ -160,9 +167,9 @@ void receiveDataFromRobot(bool isHaveCommand)
 
 	while (g_ui32SysTickCount < waitTime)
 	{
-		if (TI_CC_IsInterruptPinAsserted())
+		if (MCU_RF_IsInterruptPinAsserted())
 		{
-			TI_CC_ClearIntFlag();
+			MCU_RF_ClearIntFlag();
 
 			if (Network_receivedMessage(&pui8RxBuffer, &ui32MessageSize))
 			{
@@ -247,15 +254,19 @@ void scanJammingSignal(void)
 	while (true)
 	{
 		//TODO: Reconfig GPO2 and use CCA detect
-		if (TI_CC_IsInterruptPinAsserted())			// Is JAMMING detected?
+		if (MCU_RF_IsInterruptPinAsserted())			// Is JAMMING detected?
 		{
-			TI_CC_ClearIntFlag();
+			MCU_RF_ClearIntFlag();
 
 			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
 
 			RfFlushRxFifo();
 
-			TI_CC_Strobe(TI_CCxxx0_SRX);      // Initialize CCxxxx in RX mode.
+#ifdef RF_USE_nRF24L01
+			RF24_clearIrqFlag(RF24_IRQ_MASK);
+#endif
+
+			RfSetRxMode();
 
 			// Set the error byte to zero - indicate Rx asserted!!!
 			usbBufferDeviceToHost[32] = 0;
