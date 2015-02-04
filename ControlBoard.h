@@ -19,8 +19,15 @@
 #include "libcustom/inc/custom_uart_debug.h"
 #include "libcustom/inc/custom_bluetooth.h"
 
+#ifdef RF_USE_CC2500
 #include "libcc2500/inc/TM4C123_CC2500.h"
 #include "libcc2500/inc/cc2500.h"
+#endif
+
+#ifdef RF_USE_nRF24L01
+#include "libnrf24l01/inc/nRF24L01.h"
+#include "libnrf24l01/inc/TM4C123_nRF24L01.h"
+#endif
 
 #include "libprotocol/inc/network.h"
 
@@ -65,7 +72,7 @@ typedef enum
 //*****************************************************************************
 // RF transmit maximum packet length
 //*****************************************************************************
-#define MAX_ALLOWED_DATA_LENGTH 64
+#define MAX_ALLOWED_DATA_LENGTH 28
 
 void setRfDestinationAddress(uint32_t ui32Addr);
 uint32_t getRfDestinationAddress(void);
