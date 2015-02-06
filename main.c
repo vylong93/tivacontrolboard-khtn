@@ -23,10 +23,7 @@ void main(void)
 
 	initLaunchpadSW1();
 
-	// Set the system tick to fire 1000 times per second.
-	SysTickPeriodSet(SysCtlClockGet() / SYSTICKS_PER_SECOND);
-	SysTickIntEnable();
-	SysTickEnable();
+	initSysTick();
 
 	initBluetooth();
 
