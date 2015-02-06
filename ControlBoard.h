@@ -14,10 +14,16 @@
 #include "libcustom/inc/custom_clock.h"
 #include "libcustom/inc/custom_led.h"
 #include "libcustom/inc/custom_button.h"
-#include "libcustom/inc/custom_stickTimer.h"
-#include "libcustom/inc/custom_delay.h"
 #include "libcustom/inc/custom_uart_debug.h"
 #include "libcustom/inc/custom_bluetooth.h"
+
+#include "usblib/usblib.h"
+#include "usblib/usbhid.h"
+#include "usblib/device/usbdevice.h"
+#include "usblib/device/usbdhid.h"
+#include "usblib/usblibpriv.h"
+
+#include "usb_swarm_control_structs.h"
 
 #ifdef RF_USE_CC2500
 #include "libcc2500/inc/TM4C123_CC2500.h"
@@ -31,16 +37,107 @@
 
 #include "libprotocol/inc/network.h"
 
-#include "ControlBoard_USB.h"
+/* ---------------------------------------- Stick Timer Zone ---------------------------------------- */
+
+//*****************************************************************************
+// The system tick timer period.
+//*****************************************************************************
+#define SYSTICKS_PER_SECOND     1000
+
+//*****************************************************************************
+// SysTickIntHandler
+//*****************************************************************************
+void SysTickHandler(void);
+
+/* --------------------------------------------------------- Stick Timer Zone */
+
+
+/* -------------------------------------------- USB Zone ------------------------------------------- */
+//*****************************************************************************
+// The size of the buffers used by USB Device Driver
+//*****************************************************************************
+#define USB_BUFFER_SIZE         			64
+#define USB_MAXIMUM_TRANSMISSION_LENGTH     56
+
+//*****************************************************************************
+// The various states that the device can be in during normal operation.
+//*****************************************************************************
+#define USB_UNCONFIGURED 		0x00
+#define USB_RX_IDLE 			0x01
+#define USB_TX_IDLE 			0x02
+#define USB_TX_SENDING			0x03
+#define USB_RX_DATA_AVAILABLE   0x04
+
+void initUSB(void);
+
+//*****************************************************************************
+// Read data receive from the robot.
+// @param *length: return the length of the received data.
+// @param *readData: the pointer point to the buffer to put received data in.
+// @param  waiTime: the waiting time to receive a packet
+// @return 1: If data is received before the wait time has elapsed. Otherwise, 0.
+//*****************************************************************************
+bool readDataFromRobot(uint32_t * length, uint8_t * readData, uint32_t waitTime);
+
+//*****************************************************************************
+// This interrupt function is invoked when the host send an event to the device.
+// It will call the signalUnhandleError() function if it received a command
+// which does not belong to its command table.
+//*****************************************************************************
+uint32_t SwarmControlReceiveEventHandler(void *pvCBData, uint32_t ui32Event,
+    uint32_t ui32MsgData, void *pvMsgData);
+
+//*****************************************************************************
+// This interrupt function is invoked when the device has finished transmitting
+// data to the host and an ACK signal is received successfully.
+//*****************************************************************************
+uint32_t SwarmControlTransmitEventHandler(void *pvCBData, uint32_t ui32Event,
+    uint32_t ui32MsgData, void *pvMsgData);
+
+//*****************************************************************************
+// Every data sent to the host through the USB bus must use this function
+// for correct operation.
+// @param retransMax: The maximum retransmission times to the host
+// @return 1: if the data is put on the USB FIFO successfully. Otherwise, 0.
+//*****************************************************************************
+bool USB_sendData(uint32_t retransMax);
+
+//*****************************************************************************
+// Send a response message to the host
+// @param  response: The message to be sent.
+//*****************************************************************************
+void sendResponeToHost(uint8_t respone);
+
+//*****************************************************************************
+// Signal to the user that we have encounter an unhandled error
+//*****************************************************************************
+void signalUnhandleError(void);
+
+/* ----------------------------------------------------------------- USB Zone */
+
+
+/* ------------------------------------ Control board Zone ----------------------------------------- */
+
+typedef enum
+{
+	PROTOCOL_NORMAL,
+	PROTOCOL_BOOTLOAD
+} eProtocol;
+
+//*****************************************************************************
+// Default RF addresses
+//*****************************************************************************
+#define RF_CONTOLBOARD_ADDR		0x00C1AC02
+#define RF_DESTINATION_ADDR		0x00BEADFF
 
 //*****************************************************************************
 // Host USB Commands
 //*****************************************************************************
-#define TRANSMIT_DATA_TO_ROBOT 		0x10
-#define	TRANSMIT_DATA_TO_ROBOT_ACK	0x17
+#define TRANSMIT_DATA_TO_ROBOT 			0x10
+#define	TRANSMIT_DATA_TO_ROBOT_ACK		0x17
 
-#define RECEIVE_DATA_FROM_ROBOT		0x11
-#define RECEIVE_DATA_FROM_ROBOT_COMMAND		0x12
+#define RECEIVE_DATA_FROM_ROBOT			0x11
+#define RECEIVE_DATA_FROM_ROBOT_COMMAND 0x12
 
 #define CONFIGURE_RF				0x13
 #define CONFIGURE_SPI				0x14
@@ -51,7 +148,7 @@
 // Response to Host USB
 //*****************************************************************************
 #define CONFIGURE_RF_OK                   	0x12
-#define CONFIGURE_SPI_OK					0x13
+#define CONFIGURE_SPI_OK                  	0x13
 #define CONFIGURE_BOOTLOAD_PROTOCOL_OK		0x14
 #define CONFIGURE_NORMAL_PROTOCOL_OK		0x15
 
@@ -60,22 +157,16 @@
 #define RECEIVE_DATA_FROM_ROBOT_ERROR     	0xEE
 #define RECEIVE_DATA_FROM_ROBOT_CONTINUE  	0xAE
 
-typedef enum
-{
-	PROTOCOL_NORMAL,
-	PROTOCOL_BOOTLOAD
-} eProtocol;
-
-#define RF_CONTOLBOARD_ADDR		0x00C1AC02
-#define RF_DESTINATION_ADDR		0x00BEADFF
-
 //*****************************************************************************
 // RF transmit maximum packet length
 //*****************************************************************************
 #define MAX_ALLOWED_DATA_LENGTH 28
 
-void setRfDestinationAddress(uint32_t ui32Addr);
-uint32_t getRfDestinationAddress(void);
+//*****************************************************************************
+// !COMMAND from the host
+// Configure the SPI module used by the RF board according to the host request
+//*****************************************************************************
+void configureSPI(void);
 
 //*****************************************************************************
 // !COMMAND from the host
@@ -106,7 +197,7 @@ void broadcastBslData(void);
 // If wrong communication command between the host and this device is received,
 // it will call the signalUnhandleError() function.
 //*****************************************************************************
-void receiveDataFromRobot(bool isHaveCommand);
+void receiveDataFromRobot(bool haveCommand);
 
 //*****************************************************************************
 // !COMMAND from the host
@@ -114,5 +205,7 @@ void receiveDataFromRobot(bool isHaveCommand);
 // Detect the jamming signal and report to the host in a specific period.
 //*****************************************************************************
 void scanJammingSignal(void);
+
+/* ------------------------------------------------------ Control board Zone */
 
 #endif /* CONTROLBOARD_H_ */
