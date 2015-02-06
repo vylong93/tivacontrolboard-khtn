@@ -16,7 +16,6 @@ extern uint8_t usbBufferHostToDevice[];
 extern uint8_t usbBufferDeviceToHost[];
 
 /* ------------------------------------ Control board Zone ----------------------------------------- */
-eProtocol g_eCurrentProtocol = PROTOCOL_NORMAL;
 
 static uint32_t g_ui32TxAddress = RF_DESTINATION_ADDR;
 
@@ -76,35 +75,19 @@ void configureRF(void)
 //
 //	RF24_RX_activate();
 
+//	uint8_t ui8Channel = usbBufferHostToDevice[1];
+//	uint8_t ui8PowerIndex = usbBufferHostToDevice[2];
+//	uint8_t ui8AddressWidth = usbBufferHostToDevice[3];
+
+	g_ui32TxAddress = construct4Byte(&usbBufferHostToDevice[4]);
+
+	uint32_t ui32SelfAddress = construct4Byte(&usbBufferHostToDevice[8]);
+
+	Network_setSelfAddress(ui32SelfAddress);
+
 	sendResponeToHost(CONFIGURE_RF_OK);
-
 }
 
-void transmitDataToRobot(void)
-{
-	int32_t numberOfTransmittedBytes;
-	uint32_t delayTimeBeforeSendResponeToPC;
-
-	numberOfTransmittedBytes = usbBufferHostToDevice[1];
-	delayTimeBeforeSendResponeToPC = usbBufferHostToDevice[2];
-
-	if(Network_sendMessage(g_ui32TxAddress, &usbBufferHostToDevice[3], numberOfTransmittedBytes, false))
-	{
-		resetTickCounter();
-
-		while (getTickCounterValue() < delayTimeBeforeSendResponeToPC);
-
-		sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_DONE);
-
-		return;
-	}
-	else
-	{
-		sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_FAILED);
-
-		return;
-	}
-}
 
 void broadcastBslData(void)
 {
@@ -134,12 +117,101 @@ void broadcastBslData(void)
 
 		while (getTickCounterValue() < delayTimeBeforeSendResponeToPC);
 
+		sendResponeToHost(BOOTLOADER_BROADCAST_PACKET_DONE);
+	}
+	else
+	{
+		sendResponeToHost(BOOTLOADER_BROADCAST_PACKET_FAILED);
+	}
+}
+
+void scanJammingSignal(void)
+{
+#ifdef RF_USE_nRF24L01
+	// Open pipe#0 without Enhanced ShockBurst
+	RF24_PIPE_open(RF24_PIPE0, false);
+#endif
+
+	uint32_t ui32WaitTime = construct4Byte(&usbBufferHostToDevice[1]);
+
+	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
+
+	resetTickCounter();
+	// Waiting to see any JAMMING signal from the robots
+	while (true)
+	{
+		if (MCU_RF_IsInterruptPinAsserted())
+		{
+			MCU_RF_ClearIntFlag();
+
+			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
+
+			RfFlushRxFifo();
+
+#ifdef RF_USE_nRF24L01
+			RF24_clearIrqFlag(RF24_IRQ_MASK);
+#endif
+
+			RfSetRxMode();
+
+			// Set the error byte to zero - indicate Rx asserted!!!
+			usbBufferDeviceToHost[0] = BOOTLOADER_SCAN_JAMMING_ASSERT;
+
+			break;
+		}
+
+		if(getTickCounterValue() >= ui32WaitTime)
+		{
+			usbBufferDeviceToHost[0] = BOOTLOADER_SCAN_JAMMING_CLEAR;
+
+			break;
+		}
+	}
+
+	// Ready to receive data from PC
+	setUsbRxState(USB_RX_IDLE);
+
+	// Send the received data to PC
+	USB_sendData(0);
+
+#ifdef RF_USE_nRF24L01
+	// Open pipe#0 without Enhanced ShockBurst
+	RF24_PIPE_open(RF24_PIPE0, true);
+#endif
+
+	return;
+}
+
+
+void transmitDataToRobot(void)
+{
+	int32_t numberOfTransmittedBytes;
+	uint32_t delayTimeBeforeSendResponeToPC;
+
+	numberOfTransmittedBytes = usbBufferHostToDevice[1];
+	delayTimeBeforeSendResponeToPC = usbBufferHostToDevice[2];
+
+	if(Network_sendMessage(g_ui32TxAddress, &usbBufferHostToDevice[3], numberOfTransmittedBytes, false))
+	{
+		resetTickCounter();
+
+		while (getTickCounterValue() < delayTimeBeforeSendResponeToPC);
+
 		sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_DONE);
+
+		return;
 	}
 	else
 	{
 		sendResponeToHost(TRANSMIT_DATA_TO_ROBOT_FAILED);
+
+		return;
 	}
+}
+
+void transmitDataToRobotWithACK(void)
+{
+
 }
 
 void receiveDataFromRobot(bool haveCommand)
@@ -229,65 +301,6 @@ void receiveDataFromRobot(bool haveCommand)
 			return;
 		}
 	}
-}
-
-void scanJammingSignal(void)
-{
-#ifdef RF_USE_nRF24L01
-	// Open pipe#0 without Enhanced ShockBurst
-	RF24_PIPE_open(RF24_PIPE0, false);
-#endif
-
-	uint32_t ui32WaitTime = construct4Byte(&usbBufferHostToDevice[5]);
-
-	GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
-
-	// Signal to the PC we failed to read data from robot
-	// The error signal is at the index USB_MAXIMUM_TRANSMISSION_LENGTH since the data read
-	// from robot will be in the range [0:USB_MAXIMUM_TRANSMISSION_LENGTH - 1]
-	usbBufferDeviceToHost[USB_MAXIMUM_TRANSMISSION_LENGTH] = RECEIVE_DATA_FROM_ROBOT_ERROR;
-
-	resetTickCounter();
-	// Waiting to see any JAMMING signal from the robots
-	while (true)
-	{
-		//TODO: Reconfig GPO2 and use CCA detect
-		if (MCU_RF_IsInterruptPinAsserted())			// Is JAMMING detected?
-		{
-			MCU_RF_ClearIntFlag();
-
-			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_RED);
-
-			RfFlushRxFifo();
-
-#ifdef RF_USE_nRF24L01
-			RF24_clearIrqFlag(RF24_IRQ_MASK);
-#endif
-
-			RfSetRxMode();
-
-			// Set the error byte to zero - indicate Rx asserted!!!
-			usbBufferDeviceToHost[USB_MAXIMUM_TRANSMISSION_LENGTH] = 0;
-
-			break; // Jamming break in half
-		}
-
-		if(getTickCounterValue() >= ui32WaitTime)
-				break; // Success break
-	}
-
-	// Ready to receive data from PC
-	setUsbRxState(USB_RX_IDLE);
-
-	// Send the received data to PC
-	USB_sendData(0);
-
-#ifdef RF_USE_nRF24L01
-	// Open pipe#0 without Enhanced ShockBurst
-	RF24_PIPE_open(RF24_PIPE0, true);
-#endif
-
-	return;
 }
 
 bool readDataFromRobot(uint32_t * length, uint8_t * readData, uint32_t waitTime)

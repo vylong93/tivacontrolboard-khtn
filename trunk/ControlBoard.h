@@ -32,39 +32,36 @@
 
 #include "ControlBoard_USB.h"
 
-typedef enum
-{
-	PROTOCOL_NORMAL,
-	PROTOCOL_BOOTLOAD
-} eProtocol;
-
 //*****************************************************************************
 // Default RF addresses
 //*****************************************************************************
 #define RF_CONTOLBOARD_ADDR		0x00C1AC02
-#define RF_DESTINATION_ADDR		0x00BEADFF
+#define RF_DESTINATION_ADDR		NETWORK_BROADCAST_ADDRESS
 
 //*****************************************************************************
 // Host USB Commands
 //*****************************************************************************
-#define TRANSMIT_DATA_TO_ROBOT 			0x10
-#define	TRANSMIT_DATA_TO_ROBOT_ACK		0x17
+#define BOOTLOADER_BROADCAST_PACKET		0x10
+#define BOOTLOADER_SCAN_JAMMING			0x11
 
-#define RECEIVE_DATA_FROM_ROBOT			0x11
-#define RECEIVE_DATA_FROM_ROBOT_COMMAND 0x12
+#define TRANSMIT_DATA_TO_ROBOT 			0x12
+#define	TRANSMIT_DATA_TO_ROBOT_ACK		0x13
+#define RECEIVE_DATA_FROM_ROBOT			0x14
+#define RECEIVE_DATA_FROM_ROBOT_COMMAND 0x15
 
-#define CONFIGURE_RF				0x13
-#define CONFIGURE_SPI				0x14
-#define CONFIGURE_BOOTLOAD_PROTOCOL	0x15
-#define CONFIGURE_NORMAL_PROTOCOL	0x16
+#define CONFIGURE_RF				0x16
+#define CONFIGURE_SPI				0x17
 
 //*****************************************************************************
 // Response to Host USB
 //*****************************************************************************
-#define CONFIGURE_RF_OK                   	0x12
-#define CONFIGURE_SPI_OK                  	0x13
-#define CONFIGURE_BOOTLOAD_PROTOCOL_OK		0x14
-#define CONFIGURE_NORMAL_PROTOCOL_OK		0x15
+#define	BOOTLOADER_BROADCAST_PACKET_DONE	0x20
+#define	BOOTLOADER_BROADCAST_PACKET_FAILED	0x21
+#define	BOOTLOADER_SCAN_JAMMING_CLEAR		0x22
+#define	BOOTLOADER_SCAN_JAMMING_ASSERT		0x23
+
+#define CONFIGURE_RF_OK                   	0x24
+#define CONFIGURE_SPI_OK                  	0x25
 
 #define TRANSMIT_DATA_TO_ROBOT_DONE 	  	0xAA
 #define TRANSMIT_DATA_TO_ROBOT_FAILED   	0xFA

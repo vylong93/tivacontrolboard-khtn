@@ -7,8 +7,6 @@ extern uint32_t g_USBRxState;
 extern uint8_t usbBufferHostToDevice[];
 extern uint8_t usbBufferDeviceToHost[];
 
-extern eProtocol g_eCurrentProtocol;
-
 void Sw1IrqHandler(void);
 void MCU_RF_IRQ_handler(void);
 void BluetoothCommandDecoder(uint8_t* pui8Cmd, uint8_t ui8Length);
@@ -49,15 +47,35 @@ void main(void)
 
 			switch (usbBufferHostToDevice[0])
 			{
-			case CONFIGURE_BOOTLOAD_PROTOCOL:
-				g_eCurrentProtocol = PROTOCOL_BOOTLOAD;
-				sendResponeToHost(CONFIGURE_BOOTLOAD_PROTOCOL_OK);
+			//-----------------Bootloader Handle-------------------
+
+			case BOOTLOADER_BROADCAST_PACKET:
+				broadcastBslData();
 				break;
 
-			case CONFIGURE_NORMAL_PROTOCOL:
-				g_eCurrentProtocol = PROTOCOL_NORMAL;
-				sendResponeToHost(CONFIGURE_NORMAL_PROTOCOL_OK);
+			case BOOTLOADER_SCAN_JAMMING:
+				scanJammingSignal();
 				break;
+
+			//------------------Robot Communication------------------
+
+			case TRANSMIT_DATA_TO_ROBOT:
+				transmitDataToRobot();
+				break;
+
+			case TRANSMIT_DATA_TO_ROBOT_ACK:
+				transmitDataToRobotWithACK();
+				break;
+
+			case RECEIVE_DATA_FROM_ROBOT:
+				receiveDataFromRobot(false);
+				break;
+
+			case RECEIVE_DATA_FROM_ROBOT_COMMAND:
+				receiveDataFromRobot(true);
+				break;
+
+			//---------------Configuration---------------------
 
 			case CONFIGURE_SPI:
 				configureSPI();
@@ -67,39 +85,6 @@ void main(void)
 				configureRF();
 				break;
 
-			case TRANSMIT_DATA_TO_ROBOT:
-				switch (g_eCurrentProtocol)
-				{
-				case PROTOCOL_BOOTLOAD:
-					broadcastBslData();
-					break;
-
-				default:	// PROTOCOL_NORMAL
-					transmitDataToRobot();
-					break;
-				}
-				break;
-
-			case TRANSMIT_DATA_TO_ROBOT_ACK:		// PROTOCOL_NORMAL
-				//TODO: implement
-				break;
-
-			case RECEIVE_DATA_FROM_ROBOT:
-				switch (g_eCurrentProtocol)
-				{
-				case PROTOCOL_BOOTLOAD:
-					scanJammingSignal();
-					break;
-
-				default:	// PROTOCOL_NORMAL
-					receiveDataFromRobot(false);
-					break;
-				}
-				break;
-
-			case RECEIVE_DATA_FROM_ROBOT_COMMAND:	// PROTOCOL_NORMAL
-				receiveDataFromRobot(true);
-				break;
 
 			default:
 				signalUnhandleError();
