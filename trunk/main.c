@@ -10,30 +10,33 @@ extern uint8_t usbBufferDeviceToHost[];
 extern eProtocol g_eCurrentProtocol;
 
 void Sw1IrqHandler(void);
-void BluetoothCommandDecoder(uint8_t* pui8Cmd, uint8_t ui8Length);
 void MCU_RF_IRQ_handler(void);
+void BluetoothCommandDecoder(uint8_t* pui8Cmd, uint8_t ui8Length);
 
 void main(void)
 {
 	initSysClock();
 
-	initLeds();
+	initUartDebug();
 
-	initSysTick();
+	initLeds();
 
 	initLaunchpadSW1();
 
-	initRfModule(false);
+	// Set the system tick to fire 1000 times per second.
+	SysTickPeriodSet(SysCtlClockGet() / SYSTICKS_PER_SECOND);
+	SysTickIntEnable();
+	SysTickEnable();
 
 	initBluetooth();
 
-	initDelay();
+	initUSB();
+
+	initRfModule(false);
 
 	Network_setSelfAddress(RF_CONTOLBOARD_ADDR);
 
-	initUSB();
-
-	while (1)
+	while (true)
 	{
 		if ((g_bConnected == false) || (g_bSuspended == true))
 		{
@@ -46,6 +49,7 @@ void main(void)
 		if (g_USBRxState == USB_RX_DATA_AVAILABLE)
 		{
 			GPIOPinWrite(LED_PORT_BASE, LED_ALL, LED_BLUE);
+
 			switch (usbBufferHostToDevice[0])
 			{
 			case CONFIGURE_BOOTLOAD_PROTOCOL:
@@ -56,6 +60,10 @@ void main(void)
 			case CONFIGURE_NORMAL_PROTOCOL:
 				g_eCurrentProtocol = PROTOCOL_NORMAL;
 				sendResponeToHost(CONFIGURE_NORMAL_PROTOCOL_OK);
+				break;
+
+			case CONFIGURE_SPI:
+				configureSPI();
 				break;
 
 			case CONFIGURE_RF:
@@ -75,8 +83,7 @@ void main(void)
 				}
 				break;
 
-			case TRANSMIT_DATA_TO_ROBOT_ACK:
-				// PROTOCOL_NORMAL
+			case TRANSMIT_DATA_TO_ROBOT_ACK:		// PROTOCOL_NORMAL
 				//TODO: implement
 				break;
 
@@ -93,7 +100,7 @@ void main(void)
 				}
 				break;
 
-			case RECEIVE_DATA_FROM_ROBOT_COMMAND:
+			case RECEIVE_DATA_FROM_ROBOT_COMMAND:	// PROTOCOL_NORMAL
 				receiveDataFromRobot(true);
 				break;
 
@@ -107,6 +114,16 @@ void main(void)
 			turnOffLED(LED_BLUE);
 		}
 	}
+}
+
+void Sw1IrqHandler(void)
+{
+	// Put your testing code here!
+}
+
+void MCU_RF_IRQ_handler(void)
+{
+	// Make the complier happy, Interrupt is not used
 }
 
 void BluetoothCommandDecoder(uint8_t* pui8Cmd, uint8_t ui8Length)
@@ -123,14 +140,4 @@ void BluetoothCommandDecoder(uint8_t* pui8Cmd, uint8_t ui8Length)
 //		UARTCharPut(UART2_BASE, '\r');
 //		UARTCharPut(UART2_BASE, '\n');
 //	}
-}
-
-void Sw1IrqHandler(void)
-{
-	// Put your testing code here!
-}
-
-void MCU_RF_IRQ_handler(void)
-{
-	// Make the complier happy, Interrupt is not used
 }
