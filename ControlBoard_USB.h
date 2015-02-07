@@ -42,15 +42,6 @@ uint32_t getUsbRxState(void);
 void initUSB(void);
 
 //*****************************************************************************
-// Read data receive from the robot.
-// @param *length: return the length of the received data.
-// @param *readData: the pointer point to the buffer to put received data in.
-// @param  waiTime: the waiting time to receive a packet
-// @return 1: If data is received before the wait time has elapsed. Otherwise, 0.
-//*****************************************************************************
-bool readDataFromRobot(uint32_t * length, uint8_t * readData, uint32_t waitTime);
-
-//*****************************************************************************
 // This interrupt function is invoked when the host send an event to the device.
 // It will call the signalUnhandleError() function if it received a command
 // which does not belong to its command table.

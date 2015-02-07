@@ -8,8 +8,11 @@
 #ifndef CONTROLBOARD_H_
 #define CONTROLBOARD_H_
 
-#include <stdbool.h>
+
+#include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 #include "libcustom/inc/custom_clock.h"
 #include "libcustom/inc/custom_led.h"
@@ -39,18 +42,29 @@
 #define RF_DESTINATION_ADDR		NETWORK_BROADCAST_ADDRESS
 
 //*****************************************************************************
-// Host USB Commands
+// USB Packet parameter definition
 //*****************************************************************************
 #define BOOTLOADER_BROADCAST_PACKET		0x10
 #define BOOTLOADER_SCAN_JAMMING			0x11
 
-#define TRANSMIT_DATA_TO_ROBOT 			0x12
-#define	TRANSMIT_DATA_TO_ROBOT_ACK		0x13
-#define RECEIVE_DATA_FROM_ROBOT			0x14
-#define RECEIVE_DATA_FROM_ROBOT_COMMAND 0x15
+#define USB_PACKET_SINGLE		0x21
+#define USB_PACKET_FIRST		0x22
+#define USB_PACKET_MIDDLE		0x23
+#define USB_PACKET_LAST			0x24
 
-#define CONFIGURE_RF				0x16
-#define CONFIGURE_SPI				0x17
+#define USB_PACKET_MAX_SEGMENT_LENGTH	56
+
+//*****************************************************************************
+// Host USB Commands
+//*****************************************************************************
+#define CONFIGURE_RF		0x31
+#define CONFIGURE_SPI		0x32
+
+
+#define TRANSMIT_DATA_TO_ROBOT 			0x33
+#define	TRANSMIT_DATA_TO_ROBOT_ACK		0x34
+#define RECEIVE_DATA_FROM_ROBOT			0x35
+#define RECEIVE_DATA_FROM_ROBOT_COMMAND 0x36
 
 //*****************************************************************************
 // Response to Host USB
@@ -60,8 +74,12 @@
 #define	BOOTLOADER_SCAN_JAMMING_CLEAR		0x22
 #define	BOOTLOADER_SCAN_JAMMING_ASSERT		0x23
 
-#define CONFIGURE_RF_OK                   	0x24
-#define CONFIGURE_SPI_OK                  	0x25
+#define USB_TRANSMIT_SEGMENT_DONE			0x24
+#define USB_TRANSMIT_SEGMENT_FAILED			0x25
+
+#define CONFIGURE_RF_OK                   	0x26
+#define CONFIGURE_SPI_OK                  	0x27
+#define CONFIGURE_RECEIVE_DATA_FAILED 		0x28
 
 #define TRANSMIT_DATA_TO_ROBOT_DONE 	  	0xAA
 #define TRANSMIT_DATA_TO_ROBOT_FAILED   	0xFA
@@ -73,25 +91,21 @@
 //*****************************************************************************
 #define MAX_ALLOWED_DATA_LENGTH 28
 
+
+void setRfTxAddress(uint32_t ui32Address);
+uint32_t getRfTxAddress(void);
+
 //*****************************************************************************
 // !COMMAND from the host
 // Configure the SPI module used by the RF board according to the host request
 //*****************************************************************************
-void configureSPI(void);
+void configureSPI(uint8_t* pui8ConfigData);
 
 //*****************************************************************************
 // !COMMAND from the host
 // Configure the RF board according to the host request
 //*****************************************************************************
-void configureRF(void);
-
-//*****************************************************************************
-// !COMMAND from the host
-// Start transmitting data to robots according to the host request
-// Maximum transmitted bytes must be smaller than 32 bytes. Otherwise, it will
-// call the signalUnhandleError() function.
-//*****************************************************************************
-void transmitDataToRobot(void);
+void configureRF(uint8_t* pui8ConfigData);
 
 //*****************************************************************************
 // !COMMAND from the host
@@ -102,20 +116,28 @@ void broadcastBslData(void);
 
 //*****************************************************************************
 // !COMMAND from the host
+// This function only use in bootloader protocol
+// Detect the jamming signal and report to the host in a specific period.
+//*****************************************************************************
+void scanJammingSignal(void);
+
+//*****************************************************************************
+// !COMMAND from the host
+// Start transmitting data to robots according to the host request
+// Maximum transmitted bytes must be smaller than 32 bytes. Otherwise, it will
+// call the signalUnhandleError() function.
+//*****************************************************************************
+void transmitMessageToRobot(uint8_t* pui8PacketBuffer, bool isAckRequire);
+
+//*****************************************************************************
+// !COMMAND from the host
 // Receive data from other devices and transmit it to the host.
 // haveCommand is false when host send RECEIVE_DATA_FROM_ROBOT and
 //             is true when host send RECEIVE_DATA_FROM_ROBOT_COMMAND
 // If wrong communication command between the host and this device is received,
 // it will call the signalUnhandleError() function.
 //*****************************************************************************
-void receiveDataFromRobot(bool haveCommand);
-
-//*****************************************************************************
-// !COMMAND from the host
-// This function only use in bootloader protocol
-// Detect the jamming signal and report to the host in a specific period.
-//*****************************************************************************
-void scanJammingSignal(void);
+void receiveDataFromRobot(uint8_t* pui8DataBuffer, bool haveCommand);
 
 
 #endif /* CONTROLBOARD_H_ */
