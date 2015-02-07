@@ -20,6 +20,8 @@ volatile bool g_bConnected = false;
 uint32_t g_USBTxState = USB_UNCONFIGURED;
 uint32_t g_USBRxState = USB_UNCONFIGURED;
 
+uint32_t g_ui32TxAddress;
+
 void setUsbRxState(uint32_t ui32State)
 {
 	g_USBRxState = ui32State;
