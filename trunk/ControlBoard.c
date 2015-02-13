@@ -119,9 +119,12 @@ void broadcastBslData(void)
 
 void scanJammingSignal(void)
 {
+	MCU_RF_ClearIntFlag();
+	RfFlushRxFifo();
 #ifdef RF_USE_nRF24L01
 	// Open pipe#0 without Enhanced ShockBurst
 	RF24_PIPE_open(RF24_PIPE0, false);
+	RF24_clearIrqFlag(RF24_IRQ_MASK);
 #endif
 
 	uint32_t ui32WaitTime = construct4Byte(&usbBufferHostToDevice[1]);
