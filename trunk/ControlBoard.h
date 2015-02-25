@@ -58,8 +58,8 @@
 // Host USB Commands
 //*****************************************************************************
 #define CONFIGURE_RF		0x31
+#define CONFIGURE_RF_TX_ADDRESS	0x37
 #define CONFIGURE_SPI		0x32
-
 
 #define TRANSMIT_DATA_TO_ROBOT 			0x33
 #define	TRANSMIT_DATA_TO_ROBOT_ACK		0x34
@@ -80,6 +80,7 @@
 #define CONFIGURE_RF_OK                   	0x26
 #define CONFIGURE_SPI_OK                  	0x27
 #define CONFIGURE_RECEIVE_DATA_FAILED 		0x28
+#define CONFIGURE_RF_TX_ADDRESS_OK			0x29
 
 #define TRANSMIT_DATA_TO_ROBOT_DONE 	  	0xAA
 #define TRANSMIT_DATA_TO_ROBOT_FAILED   	0xFA
@@ -106,6 +107,7 @@ void configureSPI(uint8_t* pui8ConfigData);
 // Configure the RF board according to the host request
 //*****************************************************************************
 void configureRF(uint8_t* pui8ConfigData);
+void configureRFTxAddress(uint8_t* pui8ConfigData);
 
 //*****************************************************************************
 // !COMMAND from the host

@@ -79,6 +79,14 @@ void configureRF(uint8_t* pui8ConfigData)
 
 	sendResponeToHost(CONFIGURE_RF_OK);
 }
+void configureRFTxAddress(uint8_t* pui8ConfigData)
+{
+	uint32_t ui32TxAddress = construct4Byte(pui8ConfigData);
+
+	setRfTxAddress(ui32TxAddress);
+
+	sendResponeToHost(CONFIGURE_RF_TX_ADDRESS_OK);
+}
 
 
 void broadcastBslData(void)
