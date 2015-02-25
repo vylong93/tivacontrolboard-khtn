@@ -154,6 +154,11 @@ void decodeUsbPacket(uint8_t* pui8PacketBuffer, uint32_t ui32PacketSize)
 		configureRF(&pui8PacketBuffer[1]);
 		break;
 
+	case CONFIGURE_RF_TX_ADDRESS:
+
+		configureRFTxAddress(&pui8PacketBuffer[1]);
+		break;
+
 	//------------------Robot Communication------------------
 
 	case TRANSMIT_DATA_TO_ROBOT:
