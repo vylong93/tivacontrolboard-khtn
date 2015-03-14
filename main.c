@@ -34,6 +34,7 @@ void main(void)
 	initRfModule(false);
 
 	setRfTxAddress(RF_DESTINATION_ADDR);
+
 	Network_setSelfAddress(RF_CONTOLBOARD_ADDR);
 
 	while (true)
